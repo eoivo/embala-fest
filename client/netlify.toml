@@ -1,4 +1,7 @@
 [build]
   base = "client"
-  publish = "out"
+  publish = ".next"
   command = "npm install --force && npm run build"
+
+[[plugins]]
+package = "@netlify/plugin-nextjs"
