@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 
-const API_URL = "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 function getAuthToken(): string | null {
   return typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -226,9 +226,12 @@ async function updateStoreSettings(settings: {
 
 async function getAvailablePaymentMethods() {
   try {
-    const response = await axios.get(`${API_URL}/api/store-settings/payment-methods`, {
-      headers: getHeaders(),
-    });
+    const response = await axios.get(
+      `${API_URL}/api/store-settings/payment-methods`,
+      {
+        headers: getHeaders(),
+      }
+    );
     return response.data;
   } catch (error) {
     handleError(error);
