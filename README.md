@@ -143,6 +143,24 @@ MONGODB_URI=mongodb://localhost:27017/lena-embalagens
 JWT_SECRET=seu_secret_aqui
 ```
 
+## 🚀 Deploy
+
+O projeto está implantado em serviços de hospedagem gratuitos:
+
+### Frontend
+
+- **Plataforma**: Netlify
+- **URL**: https://embalafest.netlify.app/
+- **Configuração**: O arquivo `netlify.toml` na pasta `client` contém as configurações de build
+- **CI/CD**: Integrado com GitHub para deploy automático a cada push na branch main
+
+### Backend
+
+- **Plataforma**: Render
+- **URL**: https://embala-fest-api.onrender.com
+- **Configuração**: O arquivo `render.yaml` na pasta `server` contém as configurações do serviço
+- **Base de dados**: MongoDB Atlas (tier gratuito)
+
 ## 📝 Licença
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
