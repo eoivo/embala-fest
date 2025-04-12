@@ -26,7 +26,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://embalafest.netlify.app/"],
+    origin: ["http://localhost:3000", "https://embalafest.netlify.app"],
     credentials: true,
   })
 );

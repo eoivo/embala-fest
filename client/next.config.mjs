@@ -16,6 +16,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  output: "export",
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
@@ -25,7 +26,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:3000/api/:path*",
+        destination: "https://embala-fest-api.onrender.com/api/:path*",
       },
     ];
   },
