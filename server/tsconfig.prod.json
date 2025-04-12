@@ -3,6 +3,16 @@
   "compilerOptions": {
     "noImplicitAny": false,
     "skipLibCheck": true,
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "allowJs": true,
+    "checkJs": false,
+    "noFallthroughCasesInSwitch": false,
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "strict": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   }
 }
