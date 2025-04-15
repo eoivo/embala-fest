@@ -127,8 +127,9 @@ export const getCurrentRegister = asyncHandler(
       .populate("sales");
 
     if (!register) {
-      res.status(404);
-      throw new Error("No open register found");
+      return res
+        .status(404)
+        .json({ message: "Nenhum caixa aberto encontrado" });
     }
 
     res.json(register);

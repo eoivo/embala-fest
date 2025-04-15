@@ -28,10 +28,15 @@ app.use(
       "http://localhost:3000",
       "http://localhost:3001",
       "https://embalafest.netlify.app",
-      "https://embalafest.netlify.app/",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Origin",
+      "X-Requested-With",
+      "Accept",
+    ],
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
@@ -40,12 +45,23 @@ app.use(
 
 // Adicionar middleware para verificar e ajustar headers CORS (fallback)
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://embalafest.netlify.app");
+  const allowedOrigins = [
+    "https://embalafest.netlify.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ];
+  const origin = req.headers.origin;
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
+  res.header("Access-Control-Allow-Credentials", "true");
 
   // Responder imediatamente a solicitações OPTIONS
   if (req.method === "OPTIONS") {
