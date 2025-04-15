@@ -3,8 +3,8 @@ import axios, { AxiosError } from "axios";
 // Configuração da URL da API dependendo do ambiente
 let API_URL = "";
 if (process.env.NODE_ENV === "production") {
-  // Em produção, usamos o proxy configurado no next.config.mjs
-  API_URL = "/api";
+  // Em produção, usamos a URL completa do servidor
+  API_URL = "https://embala-fest-server.onrender.com/api";
 } else {
   // Em desenvolvimento, conectamos diretamente ao backend local
   API_URL = "http://localhost:3000/api";
