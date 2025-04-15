@@ -35,11 +35,19 @@ async function getUserProfile(userId: string, headers: any = {}) {
 
 async function create(resource: string, data: any, headers: any = {}) {
   try {
+    console.log(`Enviando requisição para: ${API_URL}/${resource}`);
+    console.log("Dados:", data);
+    console.log("Headers:", getHeaders(headers));
+
     const response = await axios.post(`${API_URL}/${resource}`, data, {
       headers: getHeaders(headers),
+      withCredentials: false, // Configuração importante para CORS
     });
+
+    console.log("Resposta:", response.data);
     return response.data;
   } catch (error) {
+    console.error("Erro na requisição:", error);
     handleError(error);
   }
 }

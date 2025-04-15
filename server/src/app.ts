@@ -28,10 +28,33 @@ app.use(
       "http://localhost:3000",
       "http://localhost:3001",
       "https://embalafest.netlify.app",
+      "https://embalafest.netlify.app/",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
 );
+
+// Adicionar middleware para verificar e ajustar headers CORS (fallback)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://embalafest.netlify.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  // Responder imediatamente a solicitações OPTIONS
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  next();
+});
+
 app.use(express.json());
 app.use(
   morgan("combined", {
