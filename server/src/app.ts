@@ -98,6 +98,16 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// Rota para o caminho raiz
+app.get("/", (req, res) => {
+  res.json({
+    message: "Bem-vindo à API do EmbalaFest",
+    documentation: "/api-docs",
+    health: "/health",
+    version: "1.0.0",
+  });
+});
+
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });

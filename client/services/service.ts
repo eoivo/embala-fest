@@ -72,9 +72,14 @@ async function create(resource: string, data: any, headers: any = {}) {
 
     // Não anexar token no login/registro
     const useAuth = resource !== "users/login" && resource !== "users";
-    const reqHeaders = useAuth ? getHeaders(headers) : headers;
+    const reqHeaders = useAuth
+      ? getHeaders(headers)
+      : {
+          "Content-Type": "application/json",
+          ...headers,
+        };
 
-    console.log("Headers finais:", reqHeaders);
+    console.log("Headers:", reqHeaders);
 
     const response = await axios.post(`${API_URL}/${resource}`, data, {
       headers: reqHeaders,
