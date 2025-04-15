@@ -1,5 +1,4 @@
 [build]
-  base = "client"
   publish = ".next"
   command = "npm install --force && npm run build"
 
@@ -11,3 +10,8 @@ package = "@netlify/plugin-nextjs"
   to = "https://embala-fest-server.onrender.com/api/:splat"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/next"
+  status = 200
