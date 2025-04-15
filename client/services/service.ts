@@ -10,6 +10,38 @@ if (process.env.NODE_ENV === "production") {
   API_URL = "http://localhost:3000/api";
 }
 
+// Configurar interceptores para debug
+axios.interceptors.request.use(
+  (config) => {
+    console.log("Request:", {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      data: config.data,
+    });
+    return config;
+  },
+  (error) => {
+    console.error("Request Error:", error);
+    return Promise.reject(error);
+  }
+);
+
+axios.interceptors.response.use(
+  (response) => {
+    console.log("Response:", {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data,
+    });
+    return response;
+  },
+  (error) => {
+    console.error("Response Error:", error);
+    return Promise.reject(error);
+  }
+);
+
 function getAuthToken(): string | null {
   return typeof window !== "undefined" ? localStorage.getItem("token") : null;
 }
