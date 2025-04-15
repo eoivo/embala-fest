@@ -25,7 +25,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://embala-fest-api.onrender.com/api/:path*",
+        destination: "http://localhost:3000/api/:path*",
       },
     ];
   },

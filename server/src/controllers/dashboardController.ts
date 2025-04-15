@@ -5,19 +5,16 @@ import { Sale } from "../models/sale.js";
 export const dashboardController = {
   async getDashboardData(req: Request, res: Response) {
     try {
-      // Busca o registro atual (caixa aberto)
       const currentRegister = await Register.findOne({
         user: req.user._id,
         status: "open",
       }).sort({ createdAt: -1 });
 
-      // Busca o último registro fechado
       const lastClosedRegister = await Register.findOne({
         user: req.user._id,
         status: "closed",
       }).sort({ updatedAt: -1 });
 
-      // Calcula vendas de hoje
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
@@ -39,7 +36,6 @@ export const dashboardController = {
         },
       });
 
-      // Calcula totais
       const todayTotal = todaySales.reduce((sum, sale) => sum + sale.total, 0);
       const yesterdayTotal = yesterdaySales.reduce(
         (sum, sale) => sum + sale.total,
@@ -50,7 +46,6 @@ export const dashboardController = {
           ? ((todayTotal - yesterdayTotal) / yesterdayTotal) * 100
           : 0;
 
-      // Calcula produtos vendidos
       const todayProducts = todaySales.reduce(
         (sum, sale) => sum + sale.products.length,
         0
@@ -62,7 +57,6 @@ export const dashboardController = {
       const productsVariation =
         yesterdayProducts > 0 ? todayProducts - yesterdayProducts : 0;
 
-      // Calcula ticket médio
       const todayTicket =
         todaySales.length > 0 ? todayTotal / todaySales.length : 0;
       const yesterdayTicket =
@@ -72,7 +66,6 @@ export const dashboardController = {
           ? ((todayTicket - yesterdayTicket) / yesterdayTicket) * 100
           : 0;
 
-      // Busca vendas dos últimos 7 dias
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -98,14 +91,12 @@ export const dashboardController = {
         },
       ]);
 
-      // Garantir que temos dados para todos os 7 dias, mesmo para dias sem vendas
       const allDaysData = [];
       for (let i = 0; i < 7; i++) {
         const date = new Date(sevenDaysAgo);
         date.setDate(date.getDate() + i);
-        const dateString = date.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+        const dateString = date.toISOString().split("T")[0];
 
-        // Verificar se já temos dados para este dia
         const existingData = last7DaysSales.find(
           (sale) => sale._id === dateString
         );
@@ -113,7 +104,6 @@ export const dashboardController = {
         if (existingData) {
           allDaysData.push(existingData);
         } else {
-          // Adicionar dia com total zero se não houver vendas
           allDaysData.push({
             _id: dateString,
             total: 0,
@@ -121,7 +111,6 @@ export const dashboardController = {
         }
       }
 
-      // Busca vendas recentes
       const recentSales = await Sale.find()
         .sort({ createdAt: -1 })
         .limit(5)
@@ -178,10 +167,8 @@ export const dashboardController = {
       const dataInicio = new Date(startDate as string);
       const dataFim = new Date(endDate as string);
 
-      // Ajustar a data final para o final do dia
       dataFim.setHours(23, 59, 59, 999);
 
-      // Buscar as vendas do período solicitado
       const vendasPeriodo = await Sale.aggregate([
         {
           $match: {
@@ -189,7 +176,7 @@ export const dashboardController = {
               $gte: dataInicio,
               $lte: dataFim,
             },
-            status: "completed", // Considerar apenas vendas concluídas
+            status: "completed",
           },
         },
         {
@@ -205,19 +192,16 @@ export const dashboardController = {
         },
       ]);
 
-      // Preencher dias sem vendas com valor zero
       const vendasCompletas = [];
       const totalPeriodo = vendasPeriodo.reduce(
         (sum, item) => sum + item.total,
         0
       );
 
-      // Criar um array com todos os dias do período
       const currentDate = new Date(dataInicio);
       while (currentDate <= dataFim) {
         const dateStr = currentDate.toISOString().split("T")[0];
 
-        // Verificar se existe venda neste dia
         const vendaDia = vendasPeriodo.find((v) => v._id === dateStr);
 
         if (vendaDia) {
@@ -232,7 +216,6 @@ export const dashboardController = {
           });
         }
 
-        // Avançar para o próximo dia
         currentDate.setDate(currentDate.getDate() + 1);
       }
 

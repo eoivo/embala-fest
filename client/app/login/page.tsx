@@ -35,7 +35,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await create("api/users/login", { email, password }, {});
+      const response = await create("users/login", { email, password }, {});
 
       // Armazena o token no localStorage
       localStorage.setItem("token", response.token);

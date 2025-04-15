@@ -1,7 +1,14 @@
 import axios from "axios";
-import { API_URL } from "../config";
 
-const API_URL = "http://localhost:3000";
+// Configuração da URL da API dependendo do ambiente
+let API_URL = "";
+if (process.env.NODE_ENV === "production") {
+  // Em produção, usamos o proxy configurado no next.config.mjs
+  API_URL = "/api";
+} else {
+  // Em desenvolvimento, conectamos diretamente ao backend local
+  API_URL = "http://localhost:3000/api";
+}
 
 function getAuthToken(): string | null {
   return typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -105,12 +112,9 @@ export const reportService = {
   async getDailyReport(date?: string): Promise<DailyReportData> {
     try {
       const params = date ? `?date=${date}` : "";
-      const response = await axios.get(
-        `${API_URL}/api/reports/daily${params}`,
-        {
-          headers: getHeaders(),
-        }
-      );
+      const response = await axios.get(`${API_URL}/reports/daily${params}`, {
+        headers: getHeaders(),
+      });
       return response.data;
     } catch (error: any) {
       console.error("Erro ao buscar relatório diário:", error);
@@ -126,12 +130,9 @@ export const reportService = {
   async getWeeklyReport(startDate?: string): Promise<WeeklyReportData> {
     try {
       const params = startDate ? `?startDate=${startDate}` : "";
-      const response = await axios.get(
-        `${API_URL}/api/reports/weekly${params}`,
-        {
-          headers: getHeaders(),
-        }
-      );
+      const response = await axios.get(`${API_URL}/reports/weekly${params}`, {
+        headers: getHeaders(),
+      });
       return response.data;
     } catch (error: any) {
       console.error("Erro ao buscar relatório semanal:", error);
@@ -158,12 +159,9 @@ export const reportService = {
         params = `?year=${year}`;
       }
 
-      const response = await axios.get(
-        `${API_URL}/api/reports/monthly${params}`,
-        {
-          headers: getHeaders(),
-        }
-      );
+      const response = await axios.get(`${API_URL}/reports/monthly${params}`, {
+        headers: getHeaders(),
+      });
       return response.data;
     } catch (error: any) {
       console.error("Erro ao buscar relatório mensal:", error);
@@ -190,12 +188,9 @@ export const reportService = {
         params = `?endDate=${endDate}`;
       }
 
-      const response = await axios.get(
-        `${API_URL}/api/reports/products${params}`,
-        {
-          headers: getHeaders(),
-        }
-      );
+      const response = await axios.get(`${API_URL}/reports/products${params}`, {
+        headers: getHeaders(),
+      });
       return response.data;
     } catch (error: any) {
       console.error("Erro ao buscar relatório de produtos:", error);
@@ -213,7 +208,7 @@ export const exportDailyReportToExcel = async (date?: string) => {
   try {
     const token = getAuthToken();
     const response = await axios.get(
-      `${API_URL}/api/reports/daily/export/excel${date ? `?date=${date}` : ""}`,
+      `${API_URL}/reports/daily/export/excel${date ? `?date=${date}` : ""}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -243,7 +238,7 @@ export const exportDailyReportToPDF = async (date?: string) => {
   try {
     const token = getAuthToken();
     const response = await axios.get(
-      `${API_URL}/api/reports/daily/export/pdf${date ? `?date=${date}` : ""}`,
+      `${API_URL}/reports/daily/export/pdf${date ? `?date=${date}` : ""}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -272,9 +267,16 @@ export const exportDailyReportToPDF = async (date?: string) => {
 export const exportWeeklyReportToExcel = async (startDate?: string) => {
   try {
     const token = getAuthToken();
+
+    // Extrair apenas a primeira data em caso de período
+    let dateParam = startDate;
+    if (startDate && startDate.includes(" - ")) {
+      dateParam = startDate.split(" - ")[0]; // Pega apenas a primeira data
+    }
+
     const response = await axios.get(
-      `${API_URL}/api/reports/weekly/export/excel${
-        startDate ? `?startDate=${startDate}` : ""
+      `${API_URL}/reports/weekly/export/excel${
+        dateParam ? `?startDate=${dateParam}` : ""
       }`,
       {
         headers: {
@@ -290,7 +292,7 @@ export const exportWeeklyReportToExcel = async (startDate?: string) => {
     link.setAttribute(
       "download",
       `relatorio_semanal_${
-        startDate || new Date().toISOString().split("T")[0]
+        dateParam || new Date().toISOString().split("T")[0]
       }.xlsx`
     );
     document.body.appendChild(link);
@@ -305,9 +307,16 @@ export const exportWeeklyReportToExcel = async (startDate?: string) => {
 export const exportWeeklyReportToPDF = async (startDate?: string) => {
   try {
     const token = getAuthToken();
+
+    // Extrair apenas a primeira data em caso de período
+    let dateParam = startDate;
+    if (startDate && startDate.includes(" - ")) {
+      dateParam = startDate.split(" - ")[0]; // Pega apenas a primeira data
+    }
+
     const response = await axios.get(
-      `${API_URL}/api/reports/weekly/export/pdf${
-        startDate ? `?startDate=${startDate}` : ""
+      `${API_URL}/reports/weekly/export/pdf${
+        dateParam ? `?startDate=${dateParam}` : ""
       }`,
       {
         headers: {
@@ -323,7 +332,7 @@ export const exportWeeklyReportToPDF = async (startDate?: string) => {
     link.setAttribute(
       "download",
       `relatorio_semanal_${
-        startDate || new Date().toISOString().split("T")[0]
+        dateParam || new Date().toISOString().split("T")[0]
       }.pdf`
     );
     document.body.appendChild(link);
@@ -351,7 +360,7 @@ export const exportMonthlyReportToExcel = async (
     }
 
     const response = await axios.get(
-      `${API_URL}/api/reports/monthly/export/excel${params}`,
+      `${API_URL}/reports/monthly/export/excel${params}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -394,7 +403,7 @@ export const exportMonthlyReportToPDF = async (
     }
 
     const response = await axios.get(
-      `${API_URL}/api/reports/monthly/export/pdf${params}`,
+      `${API_URL}/reports/monthly/export/pdf${params}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -437,7 +446,7 @@ export const exportProductsReportToExcel = async (
     }
 
     const response = await axios.get(
-      `${API_URL}/api/reports/products/export/excel${params}`,
+      `${API_URL}/reports/products/export/excel${params}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -478,7 +487,7 @@ export const exportProductsReportToPDF = async (
     }
 
     const response = await axios.get(
-      `${API_URL}/api/reports/products/export/pdf${params}`,
+      `${API_URL}/reports/products/export/pdf${params}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

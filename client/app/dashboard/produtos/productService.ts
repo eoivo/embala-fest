@@ -72,13 +72,13 @@ const getAuthHeaders = () => {
 export const productService = {
   // Buscar todos os produtos
   async getProducts(): Promise<ProductUI[]> {
-    const products = await read("api/products", getAuthHeaders());
+    const products = await read("products", getAuthHeaders());
     return products.map(mapToUIProduct);
   },
 
   // Buscar produto por ID
   async getProductById(id: string): Promise<ProductUI> {
-    const product = await read(`api/products/${id}`, getAuthHeaders());
+    const product = await read(`products/${id}`, getAuthHeaders());
     return mapToUIProduct(product);
   },
 
@@ -86,7 +86,7 @@ export const productService = {
   async createProduct(product: ProductUI): Promise<ProductUI> {
     const apiProduct = mapToAPIProduct(product);
     const createdProduct = await create(
-      "api/products",
+      "products",
       apiProduct,
       getAuthHeaders()
     );
@@ -97,7 +97,7 @@ export const productService = {
   async updateProduct(id: string, product: ProductUI): Promise<ProductUI> {
     const apiProduct = mapToAPIProduct(product);
     const updatedProduct = await update(
-      "api/products",
+      "products",
       id,
       apiProduct,
       getAuthHeaders()
@@ -107,6 +107,6 @@ export const productService = {
 
   // Excluir um produto
   async deleteProduct(id: string): Promise<void> {
-    await remove("api/products", id, getAuthHeaders());
+    await remove("products", id, getAuthHeaders());
   },
 };

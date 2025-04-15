@@ -7,7 +7,6 @@ import swaggerUi from "swagger-ui-express";
 import { logger } from "./config/logger.js";
 import { errorHandler } from "./middleware/error.js";
 
-// Routes
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import registerRoutes from "./routes/registerRoutes.js";
@@ -17,16 +16,19 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import storeSettingsRoutes from "./routes/storeSettingsRoutes.js";
+import supplierRoutes from "./routes/supplierRoutes.js";
 
-// Load environment variables
 config();
 
 const app = express();
 
-// Middleware
 app.use(
   cors({
-    origin: ["http://localhost:3000", "https://embalafest.netlify.app"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://embalafest.netlify.app",
+    ],
     credentials: true,
   })
 );
@@ -39,7 +41,6 @@ app.use(
   })
 );
 
-// Swagger configuration
 const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
@@ -74,12 +75,10 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Routes
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/register", registerRoutes);
@@ -89,8 +88,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/store-settings", storeSettingsRoutes);
+app.use("/api/suppliers", supplierRoutes);
 
-// Error handling middleware
 app.use(errorHandler);
 
 export default app;

@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import asyncHandler from "express-async-handler";
-import { Consumer} from "../models/consumer.js";
+import { Consumer } from "../models/consumer.js";
 import { Sale } from "../models/sale.js";
 
-// 📌 Criar um consumidor
 export const createConsumer = asyncHandler(
   async (req: Request, res: Response) => {
     const { name, phone, email, address } = req.body;
@@ -21,7 +20,6 @@ export const createConsumer = asyncHandler(
   }
 );
 
-// 📌 Buscar todos os consumidores
 export const getConsumers = asyncHandler(
   async (req: Request, res: Response) => {
     const consumers = await Consumer.find();
@@ -29,7 +27,6 @@ export const getConsumers = asyncHandler(
   }
 );
 
-// 📌 Buscar consumidor por ID
 export const getConsumerById = asyncHandler(
   async (req: Request, res: Response) => {
     const consumer = await Consumer.findById(req.params.id);
@@ -43,7 +40,6 @@ export const getConsumerById = asyncHandler(
   }
 );
 
-// 📌 Atualizar um consumidor
 export const updateConsumer = asyncHandler(
   async (req: Request, res: Response) => {
     const consumer = await Consumer.findById(req.params.id);
@@ -64,7 +60,6 @@ export const updateConsumer = asyncHandler(
   }
 );
 
-// 📌 Deletar um consumidor
 export const deleteConsumer = asyncHandler(
   async (req: Request, res: Response) => {
     const consumer = await Consumer.findById(req.params.id);
@@ -79,7 +74,6 @@ export const deleteConsumer = asyncHandler(
   }
 );
 
-// 📌 Buscar o último pedido do consumidor
 export const getLastSaleByConsumer = asyncHandler(
   async (req: Request, res: Response) => {
     const { consumerId } = req.params;

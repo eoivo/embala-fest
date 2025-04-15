@@ -11,7 +11,6 @@ export const createSale = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { products, paymentMethod, consumer } = req.body;
 
-    // Find open register
     const register = await Register.findOne({
       user: req.user._id,
       status: "open",
@@ -22,7 +21,6 @@ export const createSale = asyncHandler(
       throw new Error("No open register found");
     }
 
-    // Calculate total and update stock
     let total = 0;
     const saleProducts = [];
 
@@ -38,11 +36,9 @@ export const createSale = asyncHandler(
         throw new Error(`Insufficient stock for product ${product.name}`);
       }
 
-      // Update stock
       product.stock -= item.quantity;
       await product.save();
 
-      // Add to sale products
       saleProducts.push({
         product: item.product,
         quantity: item.quantity,
@@ -57,7 +53,7 @@ export const createSale = asyncHandler(
       products: saleProducts,
       total,
       paymentMethod,
-      register: register._id as mongoose.Types.ObjectId, // Cast to ObjectId
+      register: register._id as mongoose.Types.ObjectId,
     };
 
     if (consumer) {
@@ -66,7 +62,7 @@ export const createSale = asyncHandler(
         res.status(404);
         throw new Error("Consumer not found");
       }
-      saleData.consumer = consumer as mongoose.Types.ObjectId; // Cast to ObjectId
+      saleData.consumer = consumer as mongoose.Types.ObjectId;
       foundConsumer.totalSales += 1;
       foundConsumer.lastSale = new Date();
       await foundConsumer.save();
@@ -74,7 +70,6 @@ export const createSale = asyncHandler(
 
     const sale = await Sale.create(saleData);
 
-    // Add sale to register
     if (sale._id instanceof mongoose.Types.ObjectId) {
       register.sales.push(sale._id);
     } else if (typeof sale._id === "string") {
@@ -127,7 +122,6 @@ export const cancelSale = asyncHandler(
       throw new Error("Sale is already cancelled");
     }
 
-    // Restore stock
     for (const item of sale.products) {
       const product = await Product.findById(item.product);
       if (product) {

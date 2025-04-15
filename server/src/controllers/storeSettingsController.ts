@@ -3,16 +3,11 @@ import asyncHandler from "express-async-handler";
 import { StoreSettings } from "../models/storeSettings.js";
 import { AuthRequest } from "../middleware/auth.js";
 
-/**
- * Obter as configurações da loja
- */
 export const getStoreSettings = asyncHandler(
   async (req: Request, res: Response) => {
     try {
-      // Buscar as configurações da loja (sempre usa o primeiro documento)
       let settings = await StoreSettings.findOne();
 
-      // Se não existir configurações, criar um documento com valores padrão
       if (!settings) {
         settings = await StoreSettings.create({});
       }
@@ -25,13 +20,9 @@ export const getStoreSettings = asyncHandler(
   }
 );
 
-/**
- * Atualizar as configurações da loja
- */
 export const updateStoreSettings = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
-      // Verificar se o usuário tem permissão (admin ou manager)
       if (req.user.role !== "admin" && req.user.role !== "manager") {
         res.status(403);
         throw new Error(
@@ -49,14 +40,12 @@ export const updateStoreSettings = asyncHandler(
         paymentMethods,
       } = req.body;
 
-      // Buscar as configurações existentes ou criar um novo documento
       let settings = await StoreSettings.findOne();
 
       if (!settings) {
         settings = new StoreSettings({});
       }
 
-      // Atualizar os campos
       if (storeName !== undefined) settings.storeName = storeName;
       if (cnpj !== undefined) settings.cnpj = cnpj;
       if (phone !== undefined) settings.phone = phone;
@@ -64,7 +53,6 @@ export const updateStoreSettings = asyncHandler(
       if (address !== undefined) settings.address = address;
       if (openingHours !== undefined) settings.openingHours = openingHours;
 
-      // Atualizar métodos de pagamento se fornecidos
       if (paymentMethods) {
         if (paymentMethods.cash !== undefined)
           settings.paymentMethods.cash = paymentMethods.cash;
@@ -92,16 +80,12 @@ export const updateStoreSettings = asyncHandler(
   }
 );
 
-/**
- * Obter métodos de pagamento disponíveis
- */
 export const getAvailablePaymentMethods = asyncHandler(
   async (req: Request, res: Response) => {
     try {
       const settings = await StoreSettings.findOne();
 
       if (!settings) {
-        // Se não tiver configurações, retorna todos os métodos como disponíveis
         res.json({
           cash: true,
           credit: true,
@@ -111,7 +95,6 @@ export const getAvailablePaymentMethods = asyncHandler(
         return;
       }
 
-      // Retorna apenas os métodos de pagamento habilitados
       res.json(settings.paymentMethods);
     } catch (error: any) {
       res.status(500);

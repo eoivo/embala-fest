@@ -179,7 +179,7 @@ export default function NovoClientePage() {
     setLoading(true);
 
     try {
-      await create("api/consumers", formData, {});
+      await create("consumers", formData, {});
       toast({ title: "Cliente cadastrado com sucesso!" });
       router.push("/dashboard/clientes");
     } catch (error) {

@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,11 +32,17 @@ import {
   productService,
   ProductUI,
 } from "@/app/dashboard/produtos/productService";
+import {
+  supplierService,
+  SupplierUI,
+} from "@/app/dashboard/produtos/supplierService";
 
 export default function NovoProdutoPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [loadingFornecedores, setLoadingFornecedores] = useState(true);
+  const [fornecedores, setFornecedores] = useState<SupplierUI[]>([]);
   const [formData, setFormData] = useState<Partial<ProductUI>>({
     nome: "",
     descricao: "",
@@ -47,6 +53,28 @@ export default function NovoProdutoPage() {
     estoque: 0,
     estoqueMinimo: 5,
   });
+
+  // Buscar fornecedores do servidor
+  useEffect(() => {
+    async function fetchFornecedores() {
+      try {
+        setLoadingFornecedores(true);
+        const data = await supplierService.getSuppliers();
+        setFornecedores(data.filter((f) => f.ativo)); // Apenas fornecedores ativos
+      } catch (error) {
+        console.error("Erro ao carregar fornecedores:", error);
+        toast({
+          title: "Erro ao carregar fornecedores",
+          description: "Não foi possível obter a lista de fornecedores",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingFornecedores(false);
+      }
+    }
+
+    fetchFornecedores();
+  }, [toast]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -193,19 +221,31 @@ export default function NovoProdutoPage() {
                       handleSelectChange(value, "fornecedor")
                     }
                     value={formData.fornecedor}
+                    disabled={loadingFornecedores}
                   >
                     <SelectTrigger id="fornecedor">
-                      <SelectValue placeholder="Selecione um fornecedor" />
+                      <SelectValue
+                        placeholder={
+                          loadingFornecedores
+                            ? "Carregando fornecedores..."
+                            : "Selecione um fornecedor"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Embalagens Ltda">
-                        Embalagens Ltda
-                      </SelectItem>
-                      <SelectItem value="Descartáveis SA">
-                        Descartáveis SA
-                      </SelectItem>
-                      <SelectItem value="Festas & Cia">Festas & Cia</SelectItem>
-                      <SelectItem value="Outro">Outro</SelectItem>
+                      {fornecedores.length === 0 ? (
+                        <SelectItem value="placeholder" disabled>
+                          {loadingFornecedores
+                            ? "Carregando..."
+                            : "Nenhum fornecedor encontrado"}
+                        </SelectItem>
+                      ) : (
+                        fornecedores.map((fornecedor) => (
+                          <SelectItem key={fornecedor.id} value={fornecedor.id}>
+                            {fornecedor.nome}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

@@ -5,10 +5,8 @@ import { scheduledTasksService } from "./services/scheduledTasks.js";
 
 const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
 connectDB();
 
-// Iniciar tarefas agendadas
 scheduledTasksService.init();
 
 app.listen(PORT, () => {

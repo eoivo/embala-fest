@@ -26,7 +26,7 @@ export function UserNav() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userData = await read(`api/users/me`);
+        const userData = await read(`users/me`);
         setUsuario({
           nome: userData.name,
           email: userData.email,

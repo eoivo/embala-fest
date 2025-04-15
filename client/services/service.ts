@@ -1,6 +1,14 @@
 import axios, { AxiosError } from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+// Configuração da URL da API dependendo do ambiente
+let API_URL = "";
+if (process.env.NODE_ENV === "production") {
+  // Em produção, usamos o proxy configurado no next.config.mjs
+  API_URL = "/api";
+} else {
+  // Em desenvolvimento, conectamos diretamente ao backend local
+  API_URL = "http://localhost:3000/api";
+}
 
 function getAuthToken(): string | null {
   return typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -16,7 +24,7 @@ function getHeaders(headers: any = {}) {
 
 async function getUserProfile(userId: string, headers: any = {}) {
   try {
-    const response = await axios.get(`${API_URL}/api/users/${userId}`, {
+    const response = await axios.get(`${API_URL}/users/${userId}`, {
       headers: getHeaders(headers),
     });
     return response.data;
@@ -77,7 +85,7 @@ async function remove(resource: string, id: string, headers: any = {}) {
 async function cancelSale(saleId: string, headers: any = {}) {
   try {
     const response = await axios.put(
-      `${API_URL}/api/sales/${saleId}/cancel`,
+      `${API_URL}/sales/${saleId}/cancel`,
       {},
       {
         headers: getHeaders(headers),
@@ -95,7 +103,7 @@ async function cancelSaleWithManager(
 ) {
   try {
     const authResponse = await axios.post(
-      `${API_URL}/api/users/authenticate-manager`,
+      `${API_URL}/users/authenticate-manager`,
       managerCredentials,
       {
         headers: getHeaders(),
@@ -109,7 +117,7 @@ async function cancelSaleWithManager(
     }
 
     const response = await axios.put(
-      `${API_URL}/api/sales/${saleId}/cancel`,
+      `${API_URL}/sales/${saleId}/cancel`,
       {},
       {
         headers: {
@@ -135,16 +143,12 @@ async function uploadAvatar(file: File) {
     const formData = new FormData();
     formData.append("avatar", file);
 
-    const response = await axios.post(
-      `${API_URL}/api/users/me/avatar`,
-      formData,
-      {
-        headers: {
-          ...getHeaders(),
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+    const response = await axios.post(`${API_URL}/users/me/avatar`, formData, {
+      headers: {
+        ...getHeaders(),
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
     return response.data;
   } catch (error) {
@@ -154,7 +158,7 @@ async function uploadAvatar(file: File) {
 
 async function getAutoCloseSettings() {
   try {
-    const response = await axios.get(`${API_URL}/api/settings/auto-close`, {
+    const response = await axios.get(`${API_URL}/settings/auto-close`, {
       headers: getHeaders(),
     });
     return response.data;
@@ -170,7 +174,7 @@ async function updateAutoCloseSettings(settings: {
 }) {
   try {
     const response = await axios.put(
-      `${API_URL}/api/settings/auto-close`,
+      `${API_URL}/settings/auto-close`,
       settings,
       {
         headers: getHeaders(),
@@ -185,7 +189,7 @@ async function updateAutoCloseSettings(settings: {
 
 async function getStoreSettings() {
   try {
-    const response = await axios.get(`${API_URL}/api/store-settings`, {
+    const response = await axios.get(`${API_URL}/store-settings`, {
       headers: getHeaders(),
     });
     return response.data;
@@ -210,13 +214,9 @@ async function updateStoreSettings(settings: {
   };
 }) {
   try {
-    const response = await axios.put(
-      `${API_URL}/api/store-settings`,
-      settings,
-      {
-        headers: getHeaders(),
-      }
-    );
+    const response = await axios.put(`${API_URL}/store-settings`, settings, {
+      headers: getHeaders(),
+    });
     return response.data;
   } catch (error) {
     handleError(error);
@@ -227,7 +227,7 @@ async function updateStoreSettings(settings: {
 async function getAvailablePaymentMethods() {
   try {
     const response = await axios.get(
-      `${API_URL}/api/store-settings/payment-methods`,
+      `${API_URL}/store-settings/payment-methods`,
       {
         headers: getHeaders(),
       }

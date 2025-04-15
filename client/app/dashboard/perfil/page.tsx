@@ -49,7 +49,7 @@ export default function PerfilPage() {
       setLoading(true);
       try {
         // Usando a rota /api/users/me para obter os dados do usuário logado
-        const profileData = await read(`api/users/me`);
+        const profileData = await read(`users/me`);
 
         setUsuario({
           nome: profileData.name,
@@ -100,7 +100,7 @@ export default function PerfilPage() {
       };
 
       // Usar a rota api/users/me para atualização do próprio perfil
-      await update("api/users/me", "", userData);
+      await update("users/me", "", userData);
 
       toast({
         title: "Perfil atualizado com sucesso!",
@@ -146,7 +146,7 @@ export default function PerfilPage() {
 
     try {
       // Use a função de serviço em vez do fetch
-      await update("api/users/update-password", "", {
+      await update("users/update-password", "", {
         oldPassword: senhas.senhaAtual,
         newPassword: senhas.novaSenha,
       });
@@ -185,11 +185,11 @@ export default function PerfilPage() {
     if (!e.target.files || !e.target.files[0]) {
       return;
     }
-    
+
     const file = e.target.files[0];
-    
+
     // Verificar se o arquivo é uma imagem
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       toast({
         title: "Tipo de arquivo inválido",
         description: "Por favor, selecione uma imagem (JPEG, PNG, GIF).",
@@ -197,7 +197,7 @@ export default function PerfilPage() {
       });
       return;
     }
-    
+
     // Verificar tamanho do arquivo (limite de 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
@@ -207,18 +207,18 @@ export default function PerfilPage() {
       });
       return;
     }
-    
+
     setUploadingAvatar(true);
-    
+
     try {
       const result = await uploadAvatar(file);
-      
+
       if (result && result.avatar) {
         setUsuario({
           ...usuario,
           avatar: result.avatar,
         });
-        
+
         toast({
           title: "Avatar atualizado",
           description: "Sua foto de perfil foi atualizada com sucesso.",
@@ -229,7 +229,8 @@ export default function PerfilPage() {
     } catch (error) {
       toast({
         title: "Erro ao atualizar avatar",
-        description: "Não foi possível fazer o upload da imagem. Tente novamente.",
+        description:
+          "Não foi possível fazer o upload da imagem. Tente novamente.",
         variant: "destructive",
       });
     } finally {

@@ -67,7 +67,7 @@ export default function RegisterPage() {
     try {
       // Chama a função de registro do service.ts
       const response = await create(
-        "api/users",
+        "users",
         {
           name: nome,
           email,

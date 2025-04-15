@@ -4,7 +4,7 @@ export const registerService = {
   // Abrir caixa
   openRegister: async (initialBalance: number) => {
     try {
-      const response = await create("api/register/open", { initialBalance });
+      const response = await create("register/open", { initialBalance });
       return response;
     } catch (error) {
       throw error;
@@ -18,7 +18,7 @@ export const registerService = {
     managerCredentials?: { email: string; password: string }
   ) => {
     try {
-      const response = await create("api/register/close", {
+      const response = await create("register/close", {
         finalBalance,
         paymentMethods,
         managerCredentials, // Adicionamos as credenciais do gerente
@@ -35,10 +35,7 @@ export const registerService = {
     password: string;
   }) => {
     try {
-      const response = await create(
-        "api/users/authenticate-manager",
-        credentials
-      );
+      const response = await create("users/authenticate-manager", credentials);
       return response;
     } catch (error) {
       throw error;
@@ -48,7 +45,7 @@ export const registerService = {
   // Obter caixa atual
   getCurrentRegister: async () => {
     try {
-      const response = await read("api/register/current");
+      const response = await read("register/current");
       return response;
     } catch (error) {
       throw error;
@@ -58,7 +55,7 @@ export const registerService = {
   // Obter histórico de caixas
   getRegisterHistory: async () => {
     try {
-      const response = await read("api/register/history");
+      const response = await read("register/history");
       return response;
     } catch (error) {
       throw error;
@@ -68,7 +65,7 @@ export const registerService = {
   // Adicionar retirada de caixa
   addCashWithdrawal: async (amount: number, reason: string) => {
     try {
-      const response = await create("api/register/withdrawal", {
+      const response = await create("register/withdrawal", {
         amount,
         reason,
       });
@@ -81,7 +78,7 @@ export const registerService = {
   // Obter dados do dashboard
   getDashboard: async () => {
     try {
-      const response = await read("api/register/dashboard");
+      const response = await read("register/dashboard");
       return response;
     } catch (error) {
       throw error;

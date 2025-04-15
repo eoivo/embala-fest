@@ -4,37 +4,24 @@ import { Register } from "../models/register.js";
 import { User } from "../models/user.js";
 import mongoose from "mongoose";
 
-/**
- * Serviço para gerenciar tarefas agendadas do sistema
- */
 class ScheduledTasksService {
-  private autoCloseSchedule: string = "0 0 * * *"; // Padrão: 00:00 todos os dias
+  private autoCloseSchedule: string = "0 0 * * *";
   private cronJob: cron.ScheduledTask | null = null;
 
-  /**
-   * Inicia todas as tarefas agendadas
-   */
   init() {
     logger.info("Iniciando serviço de tarefas agendadas");
     this.scheduleAutoCloseRegisters();
   }
 
-  /**
-   * Agenda o fechamento automático dos caixas
-   * Executa no horário configurado (padrão: meia-noite)
-   */
   scheduleAutoCloseRegisters() {
-    // Cancelar job anterior se existir
     if (this.cronJob) {
       this.cronJob.stop();
     }
 
-    // Criar novo job com o horário configurado
     this.cronJob = cron.schedule(this.autoCloseSchedule, async () => {
       try {
         logger.info("Iniciando fechamento automático de caixas");
 
-        // Encontrar todos os caixas abertos
         const openRegisters = await Register.find({ status: "open" });
 
         if (openRegisters.length === 0) {
@@ -48,7 +35,6 @@ class ScheduledTasksService {
           `Encontrados ${openRegisters.length} caixas abertos para fechamento automático`
         );
 
-        // Encontrar um usuário administrador para associar ao fechamento
         const adminUser = await User.findOne({ role: "admin" });
 
         if (!adminUser) {
@@ -58,16 +44,13 @@ class ScheduledTasksService {
           return;
         }
 
-        // Fechar cada caixa
         for (const register of openRegisters) {
           try {
-            // Usar type assertion para garantir que TypeScript reconheça o tipo correto
             const typedRegister = register as unknown as {
               _id: mongoose.Types.ObjectId;
               initialBalance: number;
             };
 
-            // Usar o ID para buscar o registro novamente
             const registerId = typedRegister._id.toString();
             const registerForUpdate = await Register.findById(registerId);
 
@@ -78,11 +61,9 @@ class ScheduledTasksService {
               continue;
             }
 
-            // Calcular os totais do caixa
             const salesTotal =
               await this.calculateRegisterSalesTotal(registerId);
 
-            // Atualizar o registro do caixa
             registerForUpdate.finalBalance =
               registerForUpdate.initialBalance + salesTotal;
             registerForUpdate.status = "closed";
@@ -96,7 +77,6 @@ class ScheduledTasksService {
               `Caixa ID: ${registerId} fechado automaticamente. Valor final: R$ ${registerForUpdate.finalBalance.toFixed(2)}`
             );
           } catch (regError) {
-            // Usar o mesmo type assertion para o log de erro
             const typedRegister = register as unknown as {
               _id: mongoose.Types.ObjectId;
             };
@@ -124,17 +104,14 @@ class ScheduledTasksService {
    * @param minutes Minutos (0-59)
    */
   setAutoCloseTime(hours: number, minutes: number) {
-    // Validar valores
     if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
       throw new Error(
         "Horário inválido. Hora deve estar entre 0-23 e minutos entre 0-59."
       );
     }
 
-    // Formatar expressão cron: minuto hora * * *
     this.autoCloseSchedule = `${minutes} ${hours} * * *`;
 
-    // Reagendar a tarefa com o novo horário
     this.scheduleAutoCloseRegisters();
 
     return {
@@ -143,9 +120,6 @@ class ScheduledTasksService {
     };
   }
 
-  /**
-   * Obtém informações da configuração de agendamento atual
-   */
   getScheduleInfo() {
     return {
       schedule: this.autoCloseSchedule,
@@ -154,9 +128,6 @@ class ScheduledTasksService {
     };
   }
 
-  /**
-   * Obtém descrição legível do horário agendado
-   */
   private getScheduleTimeDescription(): string {
     const parts = this.autoCloseSchedule.split(" ");
     const minutes = parts[0];
@@ -169,9 +140,6 @@ class ScheduledTasksService {
     }
   }
 
-  /**
-   * Calcula o total de vendas associadas a um caixa
-   */
   async calculateRegisterSalesTotal(
     registerId: string | mongoose.Types.ObjectId
   ) {
@@ -182,7 +150,6 @@ class ScheduledTasksService {
         return 0;
       }
 
-      // Calcular o total das vendas
       let salesTotal = 0;
       register.sales.forEach((sale: any) => {
         if (

@@ -21,6 +21,10 @@ import {
   productService,
   ProductUI,
 } from "@/app/dashboard/produtos/productService";
+import {
+  supplierService,
+  SupplierUI,
+} from "@/app/dashboard/produtos/supplierService";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -48,6 +52,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -65,13 +76,15 @@ const formSchema = z.object({
   categoria: z.string().min(2, "Categoria é obrigatória"),
   preco: z.number().min(0, "Preço deve ser maior ou igual a zero"),
   estoque: z.number().min(0, "Estoque deve ser maior ou igual a zero"),
-  fornecedor: z.string().min(2, "Fornecedor é obrigatório"),
+  fornecedor: z.string().min(1, "Fornecedor é obrigatório"),
 });
 
 export default function ProdutosPage() {
   const [produtos, setProdutos] = useState<ProductUI[]>([]);
+  const [fornecedores, setFornecedores] = useState<SupplierUI[]>([]);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingFornecedores, setLoadingFornecedores] = useState(true);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState<string | null>(
     null
   );
@@ -117,6 +130,28 @@ export default function ProdutosPage() {
     fetchProdutos();
   }, [toast]);
 
+  // Carregar fornecedores da API
+  useEffect(() => {
+    const fetchFornecedores = async () => {
+      try {
+        setLoadingFornecedores(true);
+        const data = await supplierService.getSuppliers();
+        setFornecedores(data.filter((f) => f.ativo)); // Apenas fornecedores ativos
+      } catch (error) {
+        console.error("Erro ao carregar fornecedores:", error);
+        toast({
+          title: "Erro ao carregar fornecedores",
+          description: "Não foi possível obter a lista de fornecedores",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingFornecedores(false);
+      }
+    };
+
+    fetchFornecedores();
+  }, [toast]);
+
   // Filtrar produtos com base na busca
   const produtosFiltrados = produtos.filter(
     (produto) =>
@@ -125,6 +160,12 @@ export default function ProdutosPage() {
       produto.codigo.toLowerCase().includes(busca.toLowerCase()) ||
       produto.fornecedor.toLowerCase().includes(busca.toLowerCase())
   );
+
+  // Encontrar o nome do fornecedor pelo ID
+  const getFornecedorNome = (id: string) => {
+    const fornecedor = fornecedores.find((f) => f.id === id);
+    return fornecedor ? fornecedor.nome : id;
+  };
 
   // Função para excluir produto
   const handleExcluirProduto = async () => {
@@ -285,7 +326,9 @@ export default function ProdutosPage() {
                         {produto.estoque}
                       </span>
                     </TableCell>
-                    <TableCell>{produto.fornecedor}</TableCell>
+                    <TableCell>
+                      {getFornecedorNome(produto.fornecedor)}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-1">
                         <TooltipProvider>
@@ -526,7 +569,39 @@ export default function ProdutosPage() {
                     <FormItem>
                       <FormLabel>Fornecedor</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={loadingFornecedores}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                loadingFornecedores
+                                  ? "Carregando fornecedores..."
+                                  : "Selecione um fornecedor"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {fornecedores.length === 0 ? (
+                              <SelectItem value="placeholder" disabled>
+                                {loadingFornecedores
+                                  ? "Carregando..."
+                                  : "Nenhum fornecedor encontrado"}
+                              </SelectItem>
+                            ) : (
+                              fornecedores.map((fornecedor) => (
+                                <SelectItem
+                                  key={fornecedor.id}
+                                  value={fornecedor.id}
+                                >
+                                  {fornecedor.nome}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -12,6 +12,7 @@ import {
   ShoppingCart,
   Users,
   ShieldAlert,
+  Building,
 } from "lucide-react";
 
 export function MainNav() {
@@ -35,6 +36,12 @@ export function MainNav() {
       label: "Produtos",
       icon: Package,
       active: pathname.includes("/dashboard/produtos"),
+    },
+    {
+      href: "/dashboard/fornecedores",
+      label: "Fornecedores",
+      icon: Building,
+      active: pathname.includes("/dashboard/fornecedores"),
     },
     {
       href: "/dashboard/relatorios",

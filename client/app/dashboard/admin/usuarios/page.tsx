@@ -101,7 +101,7 @@ export default function AdminUsuariosPage() {
     const checkAdminPermission = async () => {
       try {
         // Verificar permissões do usuário
-        const user = await read("api/users/me");
+        const user = await read("users/me");
 
         if (user.role !== "admin") {
           setIsAdmin(false);
@@ -113,7 +113,7 @@ export default function AdminUsuariosPage() {
         setCurrentUser(user);
         setIsAdmin(true);
         setLoading(true);
-        const users = await read("api/users");
+        const users = await read("users");
         setUsuarios(users);
         setLoading(false);
       } catch (error) {
@@ -179,7 +179,7 @@ export default function AdminUsuariosPage() {
 
       if (isNovoUsuario) {
         // Criar novo usuário
-        const novoUsuario = await create("api/users", {
+        const novoUsuario = await create("users", {
           name: formNome,
           email: formEmail,
           role: formCargo,
@@ -195,7 +195,7 @@ export default function AdminUsuariosPage() {
       } else if (usuarioSelecionado) {
         // Atualizar usuário existente
         const usuarioAtualizado = await update(
-          "api/users",
+          "users",
           usuarioSelecionado._id,
           {
             name: formNome,
@@ -242,7 +242,7 @@ export default function AdminUsuariosPage() {
 
     try {
       setLoading(true);
-      await remove("api/users", id);
+      await remove("users", id);
 
       const usuariosAtualizados = usuarios.filter((u) => u._id !== id);
       setUsuarios(usuariosAtualizados);

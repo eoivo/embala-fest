@@ -106,7 +106,7 @@ export const updateUser = asyncHandler(
 
 export const updatePassword = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const user = await User.findById(req.user.id); // Usuário autenticado
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       res.status(404);
@@ -120,14 +120,12 @@ export const updatePassword = asyncHandler(
       throw new Error("A senha antiga e a nova senha são obrigatórias");
     }
 
-    // Verifica se a senha antiga está correta
     const isMatch = await user.matchPassword(oldPassword);
     if (!isMatch) {
       res.status(401);
       throw new Error("Senha antiga incorreta");
     }
 
-    // Atualiza a senha e salva
     user.password = newPassword;
     await user.save();
 
@@ -170,7 +168,6 @@ export const deleteUser = asyncHandler(
       throw new Error("Usuário não encontrado");
     }
 
-    // Verifica se o usuário logado tem permissão de admin
     if (req.user.role !== "admin") {
       res.status(403);
       throw new Error(
@@ -178,7 +175,6 @@ export const deleteUser = asyncHandler(
       );
     }
 
-    // Verifica se o usuário está tentando excluir a si mesmo
     if (user._id.toString() === req.user.id) {
       res.status(400);
       throw new Error("Não é possível excluir sua própria conta");
@@ -190,7 +186,6 @@ export const deleteUser = asyncHandler(
   }
 );
 
-// Adicione esta função no userController.js
 export const authenticateManager = asyncHandler(
   async (req: Request, res: Response) => {
     const { email, password } = req.body;
@@ -202,7 +197,6 @@ export const authenticateManager = asyncHandler(
       throw new Error("Email ou senha inválidos");
     }
 
-    // Verificar se o usuário é um gerente ou administrador
     if (user.role !== "manager" && user.role !== "admin") {
       res.status(403);
       throw new Error(
@@ -217,7 +211,6 @@ export const authenticateManager = asyncHandler(
       throw new Error("Email ou senha inválidos");
     }
 
-    // Se chegou até aqui, a autenticação foi bem-sucedida
     res.json({
       success: true,
       userId: user._id,
@@ -237,13 +230,9 @@ export const updateOwnProfile = asyncHandler(
       throw new Error("Usuário não encontrado");
     }
 
-    // Permitir atualização apenas de campos específicos
     user.name = req.body.name || user.name;
     user.phone = req.body.phone || user.phone;
     user.email = req.body.email || user.email;
-
-    // Não permitir que o usuário altere seu próprio papel/cargo
-    // Role deve permanecer o mesmo
 
     const updatedUser = await user.save();
 
@@ -260,7 +249,6 @@ export const updateOwnProfile = asyncHandler(
 export const updateAvatar = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
-      // Verificar se temos o arquivo (já verificado no middleware anterior, mas por segurança)
       if (!req.file) {
         res.status(400).json({
           success: false,
@@ -269,7 +257,6 @@ export const updateAvatar = asyncHandler(
         return;
       }
 
-      // Verificar usuário
       const user = await User.findById(req.user._id);
       if (!user) {
         res.status(404).json({
@@ -279,7 +266,6 @@ export const updateAvatar = asyncHandler(
         return;
       }
 
-      // Upload do arquivo para o Cloudinary
       let imageUrl;
       try {
         imageUrl = await uploadToCloudinary(req.file.path);
@@ -300,11 +286,9 @@ export const updateAvatar = asyncHandler(
         return;
       }
 
-      // Atualizar o campo avatar do usuário
       user.avatar = imageUrl;
       await user.save();
 
-      // Resposta de sucesso
       res.status(200).json({
         success: true,
         avatar: imageUrl,

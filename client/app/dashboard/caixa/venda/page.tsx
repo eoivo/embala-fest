@@ -158,7 +158,7 @@ export default function VendaPage() {
     }
 
     // Resetar seleção
-    setProdutoSelecionado("");
+    setProdutoSelecionado(undefined);
     setQuantidade(1);
 
     toast({
@@ -250,7 +250,7 @@ export default function VendaPage() {
       // Resetar formulário
       setItensVenda([]);
       setFormaPagamento("cash");
-      setClienteSelecionado("");
+      setClienteSelecionado(undefined);
       setDesconto(0);
     } catch (error) {
       console.error("Erro ao finalizar venda:", error);
@@ -316,7 +316,7 @@ export default function VendaPage() {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setProdutoSelecionado("")}
+                        onClick={() => setProdutoSelecionado(undefined)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -486,7 +486,7 @@ export default function VendaPage() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => setClienteSelecionado("")}
+                      onClick={() => setClienteSelecionado(undefined)}
                     >
                       <X className="h-4 w-4" />
                     </Button>

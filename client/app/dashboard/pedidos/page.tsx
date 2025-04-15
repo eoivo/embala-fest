@@ -233,20 +233,44 @@ export default function PedidosPage() {
   useEffect(() => {
     async function fetchData() {
       try {
+        setIsLoading(true);
         // Buscar pedidos
-        const data = await read("api/sales");
-        setPedidos(data);
+        const data = await read("sales");
+        setPedidos(data || []);
 
-        // Buscar os detalhes dos consumers
-        const consumerIds = data
-          .map((sale: ISale) => sale.consumer)
-          .filter((consumerId: string | undefined) => consumerId);
-
+        // Buscar consumidores
         const consumersData: { [key: string]: IConsumer } = {};
-        for (const consumerId of consumerIds) {
-          if (!consumersData[consumerId]) {
-            const consumer = await read(`api/consumers/${consumerId}`);
-            consumersData[consumerId] = consumer;
+        for (const pedido of data) {
+          if (pedido.consumer && !consumersData[pedido.consumer]) {
+            try {
+              const consumerData = await read(`consumers/${pedido.consumer}`);
+              consumersData[pedido.consumer] = consumerData;
+            } catch (error) {
+              console.error(
+                `Erro ao buscar consumidor ${pedido.consumer}:`,
+                error
+              );
+              // Se não conseguir buscar o consumidor, cria um objeto vazio
+              consumersData[pedido.consumer] = {
+                _id: pedido.consumer,
+                name: "Cliente não encontrado",
+                phone: "",
+                email: "",
+                address: {
+                  street: "",
+                  number: "",
+                  neighborhood: "",
+                  city: "",
+                  state: "",
+                  zipCode: "",
+                },
+                totalSales: 0,
+                lastSale: "",
+                status: true,
+                createdAt: "",
+                updatedAt: "",
+              };
+            }
           }
         }
 
@@ -259,6 +283,8 @@ export default function PedidosPage() {
         }
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -527,39 +553,37 @@ export default function PedidosPage() {
 
   // Função para confirmar o cancelamento e mostrar a autenticação de gerente
   const confirmarCancelamento = () => {
-    setShowCancelDialog(false);
-    setShowManagerAuth(true);
-  };
-
-  // Função para executar o cancelamento com autenticação de gerente
-  const cancelarComAutenticacaoGerente = async (credentials: {
-    email: string;
-    password: string;
-  }) => {
     if (!pedidoSelecionado) return;
+    setIsLoading(true);
 
-    try {
-      setIsLoading(true);
-      await cancelSaleWithManager(pedidoSelecionado._id, credentials);
-
-      // Atualizar a lista de pedidos após o cancelamento
-      const data = await read("api/sales");
-      setPedidos(data);
-
-      setShowManagerAuth(false);
-
-      toast({
-        title: "Pedido cancelado",
-        description:
-          "O pedido foi cancelado com sucesso e o estoque foi restaurado.",
-        variant: "default",
+    cancelSale(pedidoSelecionado._id)
+      .then(() => {
+        toast({
+          title: "Pedido cancelado",
+          description: "O pedido foi cancelado com sucesso.",
+        });
+        // Atualizar a lista de pedidos
+        read("sales")
+          .then((data) => {
+            setPedidos(data || []);
+          })
+          .catch((error) => {
+            console.error("Erro ao atualizar pedidos:", error);
+          });
+      })
+      .catch((error) => {
+        toast({
+          title: "Erro ao cancelar pedido",
+          description:
+            error.message || "Ocorreu um erro ao tentar cancelar o pedido.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setShowCancelDialog(false);
+        setPedidoSelecionado(null);
       });
-    } catch (error: any) {
-      // Propagar o erro para ser tratado no componente ManagerAuthModal
-      throw new Error(error.message || "Não foi possível cancelar o pedido");
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -950,7 +974,7 @@ export default function PedidosPage() {
         <ManagerAuthModal
           isOpen={showManagerAuth}
           onClose={() => setShowManagerAuth(false)}
-          onConfirm={cancelarComAutenticacaoGerente}
+          onConfirm={confirmarCancelamento}
           loading={isLoading}
         />
       )}

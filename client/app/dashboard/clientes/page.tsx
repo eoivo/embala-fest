@@ -135,36 +135,27 @@ export default function ClientesPage() {
   useEffect(() => {
     const checkAdminPermission = async () => {
       try {
-        const user = await read("api/users/me");
-        setIsAdmin(user.role === "admin");
+        setLoading(true);
+        const user = await read("users/me");
+
+        if (user.role !== "admin" && user.role !== "manager") {
+          setIsAdmin(false);
+          setLoading(false);
+          return;
+        }
+
+        setIsAdmin(true);
+        const data = await read("consumers", {});
+        setClientes(data);
       } catch (error) {
         console.error("Erro ao verificar permissões:", error);
         setIsAdmin(false);
-      }
-    };
-
-    checkAdminPermission();
-  }, []);
-
-  useEffect(() => {
-    const fetchClientes = async () => {
-      try {
-        setLoading(true);
-        const data = await read("api/consumers", {});
-        setClientes(data);
-      } catch (error) {
-        console.error("Erro ao buscar clientes:", error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os clientes",
-          variant: "destructive",
-        });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchClientes();
+    checkAdminPermission();
   }, []);
 
   useEffect(() => {
@@ -214,26 +205,23 @@ export default function ClientesPage() {
     try {
       setLoading(true);
 
-      await update("api/consumers", selectedClient._id, values);
+      await update("consumers", selectedClient._id, values);
 
-      const updatedClientes = clientes.map((cliente) => {
-        if (cliente._id === selectedClient._id) {
-          return { ...cliente, ...values };
-        }
-        return cliente;
-      });
+      const updatedData = await read("consumers");
+      setClientes(updatedData);
 
-      setClientes(updatedClientes);
-      setEditModalOpen(false);
       toast({
         title: "Cliente atualizado",
-        description: "Os dados do cliente foram atualizados com sucesso",
+        description: "Os dados do cliente foram atualizados com sucesso.",
       });
+
+      setSelectedClient(null);
+      setEditModalOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar cliente:", error);
       toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o cliente",
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o cliente.",
         variant: "destructive",
       });
     } finally {
@@ -247,7 +235,7 @@ export default function ClientesPage() {
     try {
       setLoading(true);
 
-      await remove("api/consumers", selectedClient._id);
+      await remove("consumers", selectedClient._id);
 
       const updatedClientes = clientes.filter(
         (cliente) => cliente._id !== selectedClient._id

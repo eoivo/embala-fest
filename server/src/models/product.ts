@@ -9,7 +9,7 @@ export interface IProduct extends mongoose.Document {
   category: string;
   sku: string;
   minStock: number;
-  supplier: string; 
+  supplier: mongoose.Types.ObjectId;
 }
 
 const productSchema = new mongoose.Schema(
@@ -20,7 +20,6 @@ const productSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: true,
     },
     price: {
       type: Number,
@@ -50,7 +49,8 @@ const productSchema = new mongoose.Schema(
       default: 5,
     },
     supplier: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Supplier",
       required: true,
     },
   },

@@ -23,20 +23,17 @@ interface SaleProduct {
   price: number;
 }
 
-// Relatório diário
 export const getDailyReport = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { date } = req.query;
 
-      // Se não for fornecida uma data, usa a data atual
       const targetDate = date ? new Date(date as string) : new Date();
       targetDate.setHours(0, 0, 0, 0);
 
       const nextDay = new Date(targetDate);
       nextDay.setDate(nextDay.getDate() + 1);
 
-      // Buscar vendas do dia
       const sales = await Sale.find({
         createdAt: {
           $gte: targetDate,
@@ -45,12 +42,10 @@ export const getDailyReport = asyncHandler(
         status: "completed",
       }).populate("products.product");
 
-      // Calcular totais
       const totalFaturado = sales.reduce((sum, sale) => sum + sale.total, 0);
       const numeroVendas = sales.length;
       const ticketMedio = numeroVendas > 0 ? totalFaturado / numeroVendas : 0;
 
-      // Calcular vendas por forma de pagamento
       const vendasPorFormaPagamento = {
         cash: 0,
         credit: 0,
@@ -64,7 +59,6 @@ export const getDailyReport = asyncHandler(
         }
       });
 
-      // Calcular totais percentuais
       const percentuaisPagamento = {
         cash:
           totalFaturado > 0
@@ -84,7 +78,6 @@ export const getDailyReport = asyncHandler(
             : 0,
       };
 
-      // Buscar produtos mais vendidos
       const produtosVendidos: ProdutoVendido[] = [];
       const produtosMap = new Map<string, ProdutoVendido>();
 
@@ -121,21 +114,19 @@ export const getDailyReport = asyncHandler(
         });
       });
 
-      // Ordenar por valor (maior para menor)
       produtosVendidos.sort((a, b) => b.valor - a.valor);
 
-      // Retornar dados
       res.json({
         date: targetDate,
         totalFaturado,
         numeroVendas,
         ticketMedio,
-        cancelamentos: 0, // Implementar lógica de cancelamentos se necessário
+        cancelamentos: 0,
         vendasPorFormaPagamento: {
           valores: vendasPorFormaPagamento,
           percentuais: percentuaisPagamento,
         },
-        produtosMaisVendidos: produtosVendidos.slice(0, 5), // Top 5
+        produtosMaisVendidos: produtosVendidos.slice(0, 5),
       });
     } catch (error: any) {
       console.error("Erro ao gerar relatório diário:", error);
@@ -146,26 +137,23 @@ export const getDailyReport = asyncHandler(
   }
 );
 
-// Relatório semanal
 export const getWeeklyReport = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { startDate } = req.query;
 
-      // Se não for fornecida uma data, usa o domingo da semana atual
       let inicioSemana = new Date();
       if (startDate) {
         inicioSemana = new Date(startDate as string);
       } else {
-        const diaSemana = inicioSemana.getDay(); // 0 = domingo, 6 = sábado
-        inicioSemana.setDate(inicioSemana.getDate() - diaSemana); // Volta para o domingo
+        const diaSemana = inicioSemana.getDay();
+        inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
       }
       inicioSemana.setHours(0, 0, 0, 0);
 
       const fimSemana = new Date(inicioSemana);
-      fimSemana.setDate(fimSemana.getDate() + 7); // 7 dias após o início
+      fimSemana.setDate(fimSemana.getDate() + 7);
 
-      // Buscar vendas da semana
       const sales = await Sale.find({
         createdAt: {
           $gte: inicioSemana,
@@ -174,7 +162,6 @@ export const getWeeklyReport = asyncHandler(
         status: "completed",
       });
 
-      // Agrupar vendas por dia da semana
       const vendasPorDia = await Sale.aggregate([
         {
           $match: {
@@ -197,7 +184,6 @@ export const getWeeklyReport = asyncHandler(
         },
       ]);
 
-      // Preencher dias sem vendas
       const diasSemana = [];
       for (let i = 0; i < 7; i++) {
         const dia = new Date(inicioSemana);
@@ -212,15 +198,12 @@ export const getWeeklyReport = asyncHandler(
         });
       }
 
-      // Calcular totais da semana
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
       const qtdVendas = sales.length;
       const ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0;
 
-      // Buscar semanas anteriores para histórico
       const ultimasSemanas = [];
       for (let i = 1; i <= 4; i++) {
-        // Últimas 4 semanas
         const inicioSemanaAnterior = new Date(inicioSemana);
         inicioSemanaAnterior.setDate(inicioSemanaAnterior.getDate() - 7 * i);
 
@@ -250,11 +233,10 @@ export const getWeeklyReport = asyncHandler(
         });
       }
 
-      // Retornar dados
       res.json({
         periodo: {
           inicio: inicioSemana,
-          fim: new Date(fimSemana.getTime() - 1), // 1ms antes do próximo dia
+          fim: new Date(fimSemana.getTime() - 1),
         },
         vendasPorDia: diasSemana,
         totais: {
@@ -273,21 +255,18 @@ export const getWeeklyReport = asyncHandler(
   }
 );
 
-// Relatório mensal
 export const getMonthlyReport = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { month, year } = req.query;
 
       const now = new Date();
-      // Se não forem fornecidos mês e ano, usa o mês atual
       const targetMonth = month ? parseInt(month as string) : now.getMonth();
       const targetYear = year ? parseInt(year as string) : now.getFullYear();
 
       const inicioMes = new Date(targetYear, targetMonth, 1);
       const fimMes = new Date(targetYear, targetMonth + 1, 1);
 
-      // Buscar vendas do mês
       const sales = await Sale.find({
         createdAt: {
           $gte: inicioMes,
@@ -296,15 +275,12 @@ export const getMonthlyReport = asyncHandler(
         status: "completed",
       });
 
-      // Calcular totais
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
       const qtdVendas = sales.length;
       const ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0;
 
-      // Buscar meses anteriores para histórico
       const ultimosMeses = [];
       for (let i = 1; i <= 6; i++) {
-        // Últimos 6 meses
         const mesTmp = targetMonth - i;
         let mesAnterior = mesTmp;
         let anoAnterior = targetYear;
@@ -346,7 +322,6 @@ export const getMonthlyReport = asyncHandler(
         });
       }
 
-      // Retornar dados
       res.json({
         periodo: {
           mes: inicioMes.toLocaleDateString("pt-BR", { month: "long" }),
@@ -357,7 +332,7 @@ export const getMonthlyReport = asyncHandler(
           qtdVendas,
           ticketMedio,
         },
-        historicoMeses: ultimosMeses.reverse(), // Do mais antigo para o mais recente
+        historicoMeses: ultimosMeses.reverse(),
       });
     } catch (error: any) {
       console.error("Erro ao gerar relatório mensal:", error);
@@ -368,13 +343,11 @@ export const getMonthlyReport = asyncHandler(
   }
 );
 
-// Relatório de produtos
 export const getProductsReport = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { startDate, endDate } = req.query;
 
-      // Definir período
       const inicio = startDate
         ? new Date(startDate as string)
         : new Date(new Date().setDate(new Date().getDate() - 30));
@@ -383,7 +356,6 @@ export const getProductsReport = asyncHandler(
       inicio.setHours(0, 0, 0, 0);
       fim.setHours(23, 59, 59, 999);
 
-      // Buscar vendas do período
       const sales = await Sale.find({
         createdAt: {
           $gte: inicio,
@@ -392,10 +364,8 @@ export const getProductsReport = asyncHandler(
         status: "completed",
       }).populate("products.product");
 
-      // Calcular total de vendas no período
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
 
-      // Buscar produtos mais vendidos
       const produtosMap = new Map<string, ProdutoVendido>();
 
       sales.forEach((sale) => {
@@ -433,10 +403,8 @@ export const getProductsReport = asyncHandler(
         });
       });
 
-      // Ordenar por valor (maior para menor)
       produtosVendidos.sort((a, b) => b.valor - a.valor);
 
-      // Retornar dados
       res.json({
         periodo: {
           inicio,
@@ -454,7 +422,6 @@ export const getProductsReport = asyncHandler(
   }
 );
 
-// Exportar relatório diário para Excel
 export const exportDailyReportToExcel = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
@@ -476,7 +443,6 @@ export const exportDailyReportToExcel = asyncHandler(
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Relatório Diário");
 
-      // Adicionar cabeçalhos
       worksheet.columns = [
         { header: "Data", key: "date", width: 15 },
         { header: "Total Faturado", key: "total", width: 15 },
@@ -501,7 +467,6 @@ export const exportDailyReportToExcel = asyncHandler(
         }),
       });
 
-      // Configurar resposta
       res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -524,7 +489,6 @@ export const exportDailyReportToExcel = asyncHandler(
   }
 );
 
-// Exportar relatório diário para PDF
 export const exportDailyReportToPDF = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
@@ -548,7 +512,6 @@ export const exportDailyReportToPDF = asyncHandler(
       const numeroVendas = sales.length;
       const ticketMedio = numeroVendas > 0 ? totalFaturado / numeroVendas : 0;
 
-      // Configurar resposta
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
@@ -559,7 +522,6 @@ export const exportDailyReportToPDF = asyncHandler(
 
       doc.pipe(res);
 
-      // Adicionar conteúdo ao PDF
       doc.fontSize(20).text("Relatório Diário", { align: "center" });
       doc.moveDown();
       doc.fontSize(12).text(`Data: ${targetDate.toLocaleDateString("pt-BR")}`);
@@ -587,26 +549,23 @@ export const exportDailyReportToPDF = asyncHandler(
   }
 );
 
-// Exportar relatório semanal para Excel
 export const exportWeeklyReportToExcel = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { startDate } = req.query;
 
-      // Se não for fornecida uma data, usa o domingo da semana atual
       let inicioSemana = new Date();
       if (startDate) {
         inicioSemana = new Date(startDate as string);
       } else {
-        const diaSemana = inicioSemana.getDay(); // 0 = domingo, 6 = sábado
-        inicioSemana.setDate(inicioSemana.getDate() - diaSemana); // Volta para o domingo
+        const diaSemana = inicioSemana.getDay();
+        inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
       }
       inicioSemana.setHours(0, 0, 0, 0);
 
       const fimSemana = new Date(inicioSemana);
-      fimSemana.setDate(fimSemana.getDate() + 7); // 7 dias após o início
+      fimSemana.setDate(fimSemana.getDate() + 7);
 
-      // Buscar vendas da semana
       const sales = await Sale.find({
         createdAt: {
           $gte: inicioSemana,
@@ -615,7 +574,6 @@ export const exportWeeklyReportToExcel = asyncHandler(
         status: "completed",
       });
 
-      // Agrupar vendas por dia da semana
       const vendasPorDia = await Sale.aggregate([
         {
           $match: {
@@ -638,11 +596,9 @@ export const exportWeeklyReportToExcel = asyncHandler(
         },
       ]);
 
-      // Criar workbook
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Relatório Semanal");
 
-      // Adicionar cabeçalhos
       worksheet.columns = [
         { header: "Período", key: "periodo", width: 20 },
         { header: "Total Vendas", key: "total", width: 15 },
@@ -650,12 +606,10 @@ export const exportWeeklyReportToExcel = asyncHandler(
         { header: "Ticket Médio", key: "ticketMedio", width: 15 },
       ];
 
-      // Calcular totais
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
       const qtdVendas = sales.length;
       const ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0;
 
-      // Adicionar linha de resumo
       worksheet.addRow({
         periodo: `${inicioSemana.toLocaleDateString("pt-BR")} a ${new Date(
           fimSemana.getTime() - 1
@@ -671,7 +625,6 @@ export const exportWeeklyReportToExcel = asyncHandler(
         }),
       });
 
-      // Adicionar uma worksheet para detalhes diários
       const detailsSheet = workbook.addWorksheet("Detalhes Diários");
       detailsSheet.columns = [
         { header: "Data", key: "data", width: 15 },
@@ -679,7 +632,6 @@ export const exportWeeklyReportToExcel = asyncHandler(
         { header: "Quantidade", key: "quantidade", width: 15 },
       ];
 
-      // Preencher dias sem vendas
       for (let i = 0; i < 7; i++) {
         const dia = new Date(inicioSemana);
         dia.setDate(dia.getDate() + i);
@@ -699,7 +651,6 @@ export const exportWeeklyReportToExcel = asyncHandler(
         });
       }
 
-      // Configurar resposta
       res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -722,26 +673,23 @@ export const exportWeeklyReportToExcel = asyncHandler(
   }
 );
 
-// Exportar relatório semanal para PDF
 export const exportWeeklyReportToPDF = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { startDate } = req.query;
 
-      // Se não for fornecida uma data, usa o domingo da semana atual
       let inicioSemana = new Date();
       if (startDate) {
         inicioSemana = new Date(startDate as string);
       } else {
-        const diaSemana = inicioSemana.getDay(); // 0 = domingo, 6 = sábado
-        inicioSemana.setDate(inicioSemana.getDate() - diaSemana); // Volta para o domingo
+        const diaSemana = inicioSemana.getDay();
+        inicioSemana.setDate(inicioSemana.getDate() - diaSemana);
       }
       inicioSemana.setHours(0, 0, 0, 0);
 
       const fimSemana = new Date(inicioSemana);
-      fimSemana.setDate(fimSemana.getDate() + 7); // 7 dias após o início
+      fimSemana.setDate(fimSemana.getDate() + 7);
 
-      // Buscar vendas da semana
       const sales = await Sale.find({
         createdAt: {
           $gte: inicioSemana,
@@ -750,14 +698,12 @@ export const exportWeeklyReportToPDF = asyncHandler(
         status: "completed",
       });
 
-      // Calcular totais
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
       const qtdVendas = sales.length;
       const ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0;
 
       const doc = new PDFDocument();
 
-      // Configurar resposta
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
@@ -768,7 +714,6 @@ export const exportWeeklyReportToPDF = asyncHandler(
 
       doc.pipe(res);
 
-      // Adicionar conteúdo ao PDF
       doc.fontSize(20).text("Relatório Semanal", { align: "center" });
       doc.moveDown();
       doc
@@ -802,21 +747,18 @@ export const exportWeeklyReportToPDF = asyncHandler(
   }
 );
 
-// Exportar relatório mensal para Excel
 export const exportMonthlyReportToExcel = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { month, year } = req.query;
 
       const now = new Date();
-      // Se não forem fornecidos mês e ano, usa o mês atual
       const targetMonth = month ? parseInt(month as string) : now.getMonth();
       const targetYear = year ? parseInt(year as string) : now.getFullYear();
 
       const inicioMes = new Date(targetYear, targetMonth, 1);
       const fimMes = new Date(targetYear, targetMonth + 1, 1);
 
-      // Buscar vendas do mês
       const sales = await Sale.find({
         createdAt: {
           $gte: inicioMes,
@@ -825,16 +767,13 @@ export const exportMonthlyReportToExcel = asyncHandler(
         status: "completed",
       });
 
-      // Calcular totais
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
       const qtdVendas = sales.length;
       const ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0;
 
-      // Criar workbook
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Relatório Mensal");
 
-      // Adicionar cabeçalhos
       worksheet.columns = [
         { header: "Período", key: "periodo", width: 20 },
         { header: "Total Vendas", key: "totalVendas", width: 15 },
@@ -842,7 +781,6 @@ export const exportMonthlyReportToExcel = asyncHandler(
         { header: "Ticket Médio", key: "ticketMedio", width: 15 },
       ];
 
-      // Adicionar linha de resumo
       const nomeMes = inicioMes.toLocaleDateString("pt-BR", { month: "long" });
       worksheet.addRow({
         periodo: `${nomeMes} de ${targetYear}`,
@@ -857,7 +795,6 @@ export const exportMonthlyReportToExcel = asyncHandler(
         }),
       });
 
-      // Configurar resposta
       res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -880,21 +817,18 @@ export const exportMonthlyReportToExcel = asyncHandler(
   }
 );
 
-// Exportar relatório mensal para PDF
 export const exportMonthlyReportToPDF = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { month, year } = req.query;
 
       const now = new Date();
-      // Se não forem fornecidos mês e ano, usa o mês atual
       const targetMonth = month ? parseInt(month as string) : now.getMonth();
       const targetYear = year ? parseInt(year as string) : now.getFullYear();
 
       const inicioMes = new Date(targetYear, targetMonth, 1);
       const fimMes = new Date(targetYear, targetMonth + 1, 1);
 
-      // Buscar vendas do mês
       const sales = await Sale.find({
         createdAt: {
           $gte: inicioMes,
@@ -903,14 +837,12 @@ export const exportMonthlyReportToPDF = asyncHandler(
         status: "completed",
       });
 
-      // Calcular totais
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
       const qtdVendas = sales.length;
       const ticketMedio = qtdVendas > 0 ? totalVendas / qtdVendas : 0;
 
       const doc = new PDFDocument();
 
-      // Configurar resposta
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
@@ -921,7 +853,6 @@ export const exportMonthlyReportToPDF = asyncHandler(
 
       doc.pipe(res);
 
-      // Adicionar conteúdo ao PDF
       doc.fontSize(20).text("Relatório Mensal", { align: "center" });
       doc.moveDown();
       const nomeMes = inicioMes.toLocaleDateString("pt-BR", { month: "long" });
@@ -950,13 +881,11 @@ export const exportMonthlyReportToPDF = asyncHandler(
   }
 );
 
-// Exportar relatório de produtos para Excel
 export const exportProductsReportToExcel = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { startDate, endDate } = req.query;
 
-      // Definir período padrão - últimos 30 dias se não for especificado
       const finalEndDate = endDate ? new Date(endDate as string) : new Date();
       const finalStartDate = startDate
         ? new Date(startDate as string)
@@ -965,7 +894,6 @@ export const exportProductsReportToExcel = asyncHandler(
       finalStartDate.setHours(0, 0, 0, 0);
       finalEndDate.setHours(23, 59, 59, 999);
 
-      // Buscar vendas no período
       const sales = await Sale.find({
         createdAt: {
           $gte: finalStartDate,
@@ -974,15 +902,12 @@ export const exportProductsReportToExcel = asyncHandler(
         status: "completed",
       }).populate("products.product");
 
-      // Agregar dados de produtos vendidos
       const produtosPorId: { [key: string]: ProdutoVendido } = {};
 
       let totalVendido = 0;
 
-      // Processar cada venda e cada produto
       sales.forEach((sale) => {
         sale.products.forEach((item: any) => {
-          // Usar type assertion com unknown primeiro para contornar o problema
           const product = item.product as unknown as {
             _id: { toString(): string };
             name: string;
@@ -1008,7 +933,6 @@ export const exportProductsReportToExcel = asyncHandler(
         });
       });
 
-      // Calcular percentual de faturamento
       for (const id in produtosPorId) {
         if (totalVendido > 0) {
           produtosPorId[id].percentualFaturamento =
@@ -1016,12 +940,10 @@ export const exportProductsReportToExcel = asyncHandler(
         }
       }
 
-      // Ordenar produtos pelo valor vendido em ordem decrescente
       const produtos: ProdutoVendido[] = Object.values(produtosPorId).sort(
         (a, b) => b.valor - a.valor
       );
 
-      // Função para formatar o percentual com segurança
       const formatPercentual = (produto: ProdutoVendido) => {
         if (
           produto.percentualFaturamento !== undefined &&
@@ -1032,7 +954,6 @@ export const exportProductsReportToExcel = asyncHandler(
         return "0.00";
       };
 
-      // Construir as linhas da tabela
       const tableRows = produtos.map((produto) => [
         produto.nome,
         produto.categoria || "Sem categoria",
@@ -1041,11 +962,9 @@ export const exportProductsReportToExcel = asyncHandler(
         `${formatPercentual(produto)}%`,
       ]);
 
-      // Criar workbook Excel
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Produtos Mais Vendidos");
 
-      // Adicionar cabeçalhos
       worksheet.columns = [
         { header: "Produto", key: "nome", width: 30 },
         { header: "Categoria", key: "categoria", width: 20 },
@@ -1054,31 +973,26 @@ export const exportProductsReportToExcel = asyncHandler(
         { header: "% do Faturamento", key: "percentual", width: 20 },
       ];
 
-      // Adicionar linha de título
       worksheet.mergeCells("A1:E1");
       const titleCell = worksheet.getCell("A1");
       titleCell.value = "Relatório de Produtos Mais Vendidos";
       titleCell.font = { size: 16, bold: true };
       titleCell.alignment = { horizontal: "center" };
 
-      // Adicionar informação do período
       worksheet.mergeCells("A2:E2");
       const periodoCell = worksheet.getCell("A2");
       periodoCell.value = `Período: ${finalStartDate.toLocaleDateString("pt-BR")} a ${finalEndDate.toLocaleDateString("pt-BR")}`;
       periodoCell.font = { size: 12, bold: false };
       periodoCell.alignment = { horizontal: "center" };
 
-      worksheet.addRow({}); // Linha em branco
+      worksheet.addRow({});
 
-      // Formatar cabeçalho
       worksheet.getRow(4).font = { bold: true };
 
-      // Adicionar dados
       tableRows.forEach((row) => {
         worksheet.addRow(row);
       });
 
-      // Configurar resposta
       res.setHeader(
         "Content-Type",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -1103,13 +1017,11 @@ export const exportProductsReportToExcel = asyncHandler(
   }
 );
 
-// Exportar relatório de produtos para PDF
 export const exportProductsReportToPDF = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     try {
       const { startDate, endDate } = req.query;
 
-      // Definir período padrão - últimos 30 dias se não for especificado
       const finalEndDate = endDate ? new Date(endDate as string) : new Date();
       const finalStartDate = startDate
         ? new Date(startDate as string)
@@ -1118,7 +1030,6 @@ export const exportProductsReportToPDF = asyncHandler(
       finalStartDate.setHours(0, 0, 0, 0);
       finalEndDate.setHours(23, 59, 59, 999);
 
-      // Buscar vendas no período
       const sales = await Sale.find({
         createdAt: {
           $gte: finalStartDate,
@@ -1127,15 +1038,12 @@ export const exportProductsReportToPDF = asyncHandler(
         status: "completed",
       }).populate("products.product");
 
-      // Agregar dados de produtos vendidos
       const produtosPorId: { [key: string]: ProdutoVendido } = {};
 
       let totalVendido = 0;
 
-      // Processar cada venda e cada produto
       sales.forEach((sale) => {
         sale.products.forEach((item: any) => {
-          // Usar type assertion com unknown primeiro para contornar o problema
           const product = item.product as unknown as {
             _id: { toString(): string };
             name: string;
@@ -1161,7 +1069,6 @@ export const exportProductsReportToPDF = asyncHandler(
         });
       });
 
-      // Calcular percentual de faturamento
       for (const id in produtosPorId) {
         if (totalVendido > 0) {
           produtosPorId[id].percentualFaturamento =
@@ -1169,12 +1076,10 @@ export const exportProductsReportToPDF = asyncHandler(
         }
       }
 
-      // Ordenar produtos pelo valor vendido em ordem decrescente
       const produtos: ProdutoVendido[] = Object.values(produtosPorId).sort(
         (a, b) => b.valor - a.valor
       );
 
-      // Função para formatar o percentual com segurança
       const formatPercentual = (produto: ProdutoVendido) => {
         if (
           produto.percentualFaturamento !== undefined &&
@@ -1185,7 +1090,6 @@ export const exportProductsReportToPDF = asyncHandler(
         return "0.00";
       };
 
-      // Construir as linhas da tabela
       const tableRows = produtos.map((produto) => [
         produto.nome,
         produto.categoria || "Sem categoria",
@@ -1194,10 +1098,8 @@ export const exportProductsReportToPDF = asyncHandler(
         `${formatPercentual(produto)}%`,
       ]);
 
-      // Criar PDF
       const doc = new PDFDocument();
 
-      // Configurar resposta
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
@@ -1206,13 +1108,11 @@ export const exportProductsReportToPDF = asyncHandler(
 
       doc.pipe(res);
 
-      // Adicionar título
       doc
         .fontSize(20)
         .text("Relatório de Produtos Mais Vendidos", { align: "center" });
       doc.moveDown();
 
-      // Adicionar informação do período
       doc
         .fontSize(12)
         .text(
@@ -1221,19 +1121,16 @@ export const exportProductsReportToPDF = asyncHandler(
         );
       doc.moveDown(2);
 
-      // Adicionar informações gerais
       doc.text(
         `Total de vendas no período: ${totalVendido.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
       );
       doc.text(`Total de produtos diferentes vendidos: ${produtos.length}`);
       doc.moveDown(2);
 
-      // Definir colunas da tabela
       const tableTop = doc.y;
       const tableLeft = 50;
       const colWidths = [200, 80, 80, 80];
 
-      // Cabeçalho da tabela
       doc.font("Helvetica-Bold");
       doc.text("Produto", tableLeft, tableTop);
       doc.text("Quantidade", tableLeft + colWidths[0], tableTop);
@@ -1245,15 +1142,12 @@ export const exportProductsReportToPDF = asyncHandler(
       );
       doc.moveDown();
 
-      // Linhas da tabela
       doc.font("Helvetica");
       let currentY = doc.y;
 
-      // Mostrar apenas os top 15 produtos para não sobrecarregar o PDF
       const produtosExibidos = produtos.slice(0, 15);
 
       produtosExibidos.forEach((produto) => {
-        // Verificar se precisa mudar de página
         if (currentY > doc.page.height - 100) {
           doc.addPage();
           currentY = 50;
@@ -1285,7 +1179,6 @@ export const exportProductsReportToPDF = asyncHandler(
         doc.moveDown();
       });
 
-      // Se houver mais produtos que não foram exibidos
       if (produtos.length > produtosExibidos.length) {
         doc.moveDown();
         doc.text(

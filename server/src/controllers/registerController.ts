@@ -36,7 +36,6 @@ export const openRegister = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { initialBalance } = req.body;
 
-    // Check if there's already an open register for this user
     const existingOpenRegister = await Register.findOne({
       user: req.user._id,
       status: "open",
@@ -61,7 +60,6 @@ export const closeRegister = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { finalBalance, paymentMethods, managerCredentials } = req.body;
 
-    // Verificar se foram enviadas as credenciais do gerente
     if (
       !managerCredentials ||
       !managerCredentials.email ||
@@ -71,7 +69,6 @@ export const closeRegister = asyncHandler(
       throw new Error("Credenciais do gerente são obrigatórias");
     }
 
-    // Autenticar o gerente
     const manager = await User.findOne({ email: managerCredentials.email });
 
     if (!manager) {
@@ -79,13 +76,11 @@ export const closeRegister = asyncHandler(
       throw new Error("Email ou senha inválidos");
     }
 
-    // Verificar se o usuário é um gerente ou administrador
     if (manager.role !== "manager" && manager.role !== "admin") {
       res.status(403);
       throw new Error("Apenas gerentes podem autorizar o fechamento do caixa");
     }
 
-    // Verificar a senha
     const isMatch = await manager.matchPassword(managerCredentials.password);
 
     if (!isMatch) {
@@ -93,7 +88,6 @@ export const closeRegister = asyncHandler(
       throw new Error("Email ou senha inválidos");
     }
 
-    // Buscar o registro do caixa
     const register = await Register.findOne({
       user: req.user._id,
       status: "open",
@@ -167,8 +161,7 @@ export const addCashWithdrawal = asyncHandler(
 
 export const getRegisterDashboard = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    // Buscar o caixa atual
-    const currentRegister = (await Register.findOne({
+    const currentRegister = await Register.findOne({
       user: req.user._id,
       status: "open",
     })
@@ -176,18 +169,16 @@ export const getRegisterDashboard = asyncHandler(
       .populate({
         path: "sales",
         model: "Sale",
-      })) as IRegisterPopulated | null;
+      });
 
-    // Buscar o último caixa fechado
-    const lastClosedRegister = (await Register.findOne({
+    const lastClosedRegister = await Register.findOne({
       user: req.user._id,
       status: "closed",
     })
       .sort({ closedAt: -1 })
       .populate("user", "name")
-      .populate("closedBy", "name")) as IRegisterPopulated | null;
+      .populate("closedBy", "name");
 
-    // Calcular totais do caixa atual
     let totalVendas = 0;
     let qtdeVendas = 0;
     let vendasPorFormaPagamento: PaymentMethodTotals = {
@@ -198,7 +189,10 @@ export const getRegisterDashboard = asyncHandler(
     };
 
     if (currentRegister && currentRegister.sales) {
-      currentRegister.sales.forEach((sale) => {
+      const populatedRegister =
+        currentRegister as unknown as IRegisterPopulated;
+
+      populatedRegister.sales.forEach((sale) => {
         totalVendas += sale.total;
         qtdeVendas++;
         if (sale.paymentMethod in vendasPorFormaPagamento) {
@@ -207,7 +201,9 @@ export const getRegisterDashboard = asyncHandler(
       });
     }
 
-    // Preparar resposta
+    const populatedLastClosedRegister =
+      lastClosedRegister as unknown as IRegisterPopulated | null;
+
     const response = {
       status: currentRegister ? "open" : "closed",
       currentRegister: currentRegister
@@ -219,21 +215,22 @@ export const getRegisterDashboard = asyncHandler(
             qtdeVendas,
             vendasPorFormaPagamento,
             horaAbertura: currentRegister.createdAt,
-            operador: currentRegister.user.name,
+            operador: (currentRegister as unknown as IRegisterPopulated).user
+              .name,
           }
         : null,
-      lastClosedRegister: lastClosedRegister
+      lastClosedRegister: populatedLastClosedRegister
         ? {
-            id: lastClosedRegister._id,
-            saldoInicial: lastClosedRegister.initialBalance,
-            saldoFinal: lastClosedRegister.finalBalance || 0,
+            id: populatedLastClosedRegister._id,
+            saldoInicial: populatedLastClosedRegister.initialBalance,
+            saldoFinal: populatedLastClosedRegister.finalBalance || 0,
             totalVendas:
-              (lastClosedRegister.finalBalance || 0) -
-              lastClosedRegister.initialBalance,
-            horaAbertura: lastClosedRegister.createdAt,
-            horaFechamento: lastClosedRegister.closedAt,
-            operador: lastClosedRegister.user.name,
-            fechadoPor: lastClosedRegister.closedBy?.name,
+              (populatedLastClosedRegister.finalBalance || 0) -
+              populatedLastClosedRegister.initialBalance,
+            horaAbertura: populatedLastClosedRegister.createdAt,
+            horaFechamento: populatedLastClosedRegister.closedAt,
+            operador: populatedLastClosedRegister.user.name,
+            fechadoPor: populatedLastClosedRegister.closedBy?.name,
           }
         : null,
     };
