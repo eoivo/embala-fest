@@ -25,7 +25,11 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:3000/api/:path*",
+        destination:
+          process.env.NODE_ENV === "production"
+            ? process.env.API_URL ||
+              "https://embala-fest-server.onrender.com/api/:path*"
+            : "http://localhost:3000/api/:path*",
       },
     ];
   },

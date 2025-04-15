@@ -5,3 +5,9 @@
 
 [[plugins]]
 package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://embala-fest-server.onrender.com/api/:splat"
+  status = 200
+  force = true
