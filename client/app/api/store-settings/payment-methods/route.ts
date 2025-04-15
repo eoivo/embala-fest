@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// URL do servidor backend
+const API_BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://embala-fest-api.onrender.com"
+    : "http://localhost:3000";
+
 export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get("authorization");
@@ -9,9 +15,7 @@ export async function GET(req: NextRequest) {
     }
 
     const response = await fetch(
-      `${
-        process.env.API_URL || "http://localhost:3000"
-      }/api/store-settings/payment-methods`,
+      `${API_BASE_URL}/api/store-settings/payment-methods`,
       {
         headers: {
           Authorization: token,
