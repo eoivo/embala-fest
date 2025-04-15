@@ -3,8 +3,8 @@ import axios, { AxiosError } from "axios";
 // Configuração da URL da API dependendo do ambiente
 let API_URL = "";
 if (process.env.NODE_ENV === "production") {
-  // Em produção, usamos a URL completa do servidor
-  API_URL = "https://embala-fest-server.onrender.com/api";
+  // Em produção, usamos o proxy configurado no netlify.toml
+  API_URL = "/api";
 } else {
   // Em desenvolvimento, conectamos diretamente ao backend local
   API_URL = "http://localhost:3000/api";
@@ -37,11 +37,16 @@ async function create(resource: string, data: any, headers: any = {}) {
   try {
     console.log(`Enviando requisição para: ${API_URL}/${resource}`);
     console.log("Dados:", data);
-    console.log("Headers:", getHeaders(headers));
+
+    // Não anexar token no login/registro
+    const useAuth = resource !== "users/login" && resource !== "users";
+    const reqHeaders = useAuth ? getHeaders(headers) : headers;
+
+    console.log("Headers finais:", reqHeaders);
 
     const response = await axios.post(`${API_URL}/${resource}`, data, {
-      headers: getHeaders(headers),
-      withCredentials: false, // Configuração importante para CORS
+      headers: reqHeaders,
+      withCredentials: false,
     });
 
     console.log("Resposta:", response.data);

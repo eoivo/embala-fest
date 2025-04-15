@@ -5,12 +5,24 @@
 [[plugins]]
 package = "@netlify/plugin-nextjs"
 
+# Proxy para API com headers CORS
 [[redirects]]
   from = "/api/*"
   to = "https://embala-fest-server.onrender.com/api/:splat"
   status = 200
   force = true
+  headers = {Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"}
 
+# Responder imediatamente a solicitações OPTIONS (preflight CORS)
+[[redirects]]
+  from = "/api/*"
+  to = "https://embala-fest-server.onrender.com/api/:splat"
+  status = 204
+  force = true
+  methods = ["OPTIONS"]
+  headers = {Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"}
+
+# Rotas do Next.js
 [[redirects]]
   from = "/*"
   to = "/.netlify/functions/next"
