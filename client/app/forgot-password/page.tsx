@@ -50,12 +50,11 @@ export default function ForgotPasswordPage() {
       </Link>
 
       <div className="flex items-center mb-8">
-        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl animate-float">
-          E
-        </div>
-        <span className="ml-2 font-bold text-xl text-primary">
-          Embalagens & Festas
-        </span>
+        <img
+          src="/logos/logo-full.png"
+          alt="EmbalaFest Logo"
+          className="h-16"
+        />
       </div>
 
       <Card className="w-full max-w-md">

@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -25,6 +31,8 @@ import {
   UserCog,
   User,
   AlertTriangle,
+  ArrowUpDown,
+  Calendar,
 } from "lucide-react";
 import {
   Dialog,
@@ -81,6 +89,8 @@ export default function AdminUsuariosPage() {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Estados para o formulário de criação/edição
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<UserType | null>(
@@ -126,13 +136,45 @@ export default function AdminUsuariosPage() {
     checkAdminPermission();
   }, [router, toast]);
 
+  // Função para ordenar usuários
+  const sortUsuarios = (usuarios: UserType[]) => {
+    return [...usuarios].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortBy === "name") {
+        comparison = a.name.localeCompare(b.name);
+      } else if (sortBy === "email") {
+        comparison = a.email.localeCompare(b.email);
+      } else if (sortBy === "role") {
+        comparison = a.role.localeCompare(b.role);
+      } else if (sortBy === "createdAt") {
+        comparison =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  };
+
   // Filtrar usuários com base na busca
-  const usuariosFiltrados = usuarios.filter(
-    (usuario) =>
-      usuario.name.toLowerCase().includes(busca.toLowerCase()) ||
-      usuario.email.toLowerCase().includes(busca.toLowerCase()) ||
-      usuario.role.toLowerCase().includes(busca.toLowerCase())
+  const usuariosFiltrados = sortUsuarios(
+    usuarios.filter(
+      (usuario) =>
+        usuario.name.toLowerCase().includes(busca.toLowerCase()) ||
+        usuario.email.toLowerCase().includes(busca.toLowerCase()) ||
+        usuario.role.toLowerCase().includes(busca.toLowerCase())
+    )
   );
+
+  // Função para alternar a direção da ordenação
+  const toggleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortDirection("asc");
+    }
+  };
 
   // Função para abrir o modal de criação de usuário
   const handleNovoUsuario = () => {
@@ -341,7 +383,8 @@ export default function AdminUsuariosPage() {
           <DialogTrigger asChild>
             <Button onClick={handleNovoUsuario}>
               <Plus className="mr-2 h-4 w-4" />
-              Novo Usuário
+              <span className="hidden sm:inline">Novo Usuário</span>
+              <span className="sm:hidden">Novo</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
@@ -477,12 +520,12 @@ export default function AdminUsuariosPage() {
         </Dialog>
       </DashboardHeader>
 
-      <div className="flex items-center mb-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
+        <div className="relative flex-1 w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar usuários..."
+            placeholder="Buscar usuários por nome, email ou cargo..."
             className="pl-8"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -490,114 +533,302 @@ export default function AdminUsuariosPage() {
         </div>
       </div>
 
-      <Card>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Usuário</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Data de Cadastro</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usuariosFiltrados.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center text-muted-foreground py-6"
-                  >
-                    Nenhum usuário encontrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                usuariosFiltrados.map((usuario) => (
-                  <TableRow key={usuario._id}>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <Avatar className="h-8 w-8 mr-2">
-                          <AvatarFallback>
-                            {getInitials(usuario.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="font-medium">{usuario.name}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{usuario.email}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        {getCargoIcon(usuario.role)}
-                        <span className="ml-1">
-                          {getCargoText(usuario.role)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{usuario.phone}</TableCell>
-                    <TableCell>
-                      {new Date(usuario.createdAt).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditarUsuario(usuario)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+      {!loading && usuariosFiltrados.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Exibindo {usuariosFiltrados.length}{" "}
+          {usuariosFiltrados.length === 1 ? "usuário" : "usuários"}
+          {busca && ` para "${busca}"`}
+        </div>
+      )}
 
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={usuario._id === currentUser?._id}
-                              className={
-                                usuario._id === currentUser?._id
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Excluir Usuário
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o usuário "
-                                {usuario.name}"? Esta ação não pode ser
-                                desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() =>
-                                  handleExcluirUsuario(usuario._id)
-                                }
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                disabled={loading}
-                              >
-                                {loading ? "Excluindo..." : "Excluir"}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+      {/* Opções de ordenação para mobile */}
+      <div className="md:hidden mb-4">
+        <Select
+          value={`${sortBy}-${sortDirection}`}
+          onValueChange={(value) => {
+            const [field, direction] = value.split("-");
+            setSortBy(field);
+            setSortDirection(direction as "asc" | "desc");
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Ordenar por..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name-asc">Nome (A-Z)</SelectItem>
+            <SelectItem value="name-desc">Nome (Z-A)</SelectItem>
+            <SelectItem value="email-asc">Email (A-Z)</SelectItem>
+            <SelectItem value="email-desc">Email (Z-A)</SelectItem>
+            <SelectItem value="role-asc">Cargo (A-Z)</SelectItem>
+            <SelectItem value="role-desc">Cargo (Z-A)</SelectItem>
+            <SelectItem value="createdAt-desc">Data (Mais recente)</SelectItem>
+            <SelectItem value="createdAt-asc">Data (Mais antiga)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Versão para desktop - visível apenas em telas md e maiores */}
+      <div className="hidden md:block">
+        <Card>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("name")}
+                    >
+                      Usuário
+                      {sortBy === "name" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("email")}
+                    >
+                      Email
+                      {sortBy === "email" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("role")}
+                    >
+                      Cargo
+                      {sortBy === "role" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>Telefone</TableHead>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("createdAt")}
+                    >
+                      Data de Cadastro
+                      {sortBy === "createdAt" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {usuariosFiltrados.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="text-center text-muted-foreground py-6"
+                    >
+                      Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+                ) : (
+                  usuariosFiltrados.map((usuario) => (
+                    <TableRow key={usuario._id}>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Avatar className="h-8 w-8 mr-2">
+                            <AvatarFallback>
+                              {getInitials(usuario.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="font-medium">{usuario.name}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{usuario.email}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          {getCargoIcon(usuario.role)}
+                          <span className="ml-1">
+                            {getCargoText(usuario.role)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{usuario.phone}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Calendar className="mr-1 h-3 w-3 text-muted-foreground" />
+                          {new Date(usuario.createdAt).toLocaleDateString(
+                            "pt-BR"
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditarUsuario(usuario)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={usuario._id === currentUser?._id}
+                                className={
+                                  usuario._id === currentUser?._id
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Excluir Usuário
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja excluir o usuário "
+                                  {usuario.name}"? Esta ação não pode ser
+                                  desfeita.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleExcluirUsuario(usuario._id)
+                                  }
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  disabled={loading}
+                                >
+                                  {loading ? "Excluindo..." : "Excluir"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      </div>
+
+      {/* Versão para dispositivos móveis (cards) - visível apenas em telas menores que md */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">Carregando usuários...</p>
+            </CardContent>
+          </Card>
+        ) : usuariosFiltrados.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">Nenhum usuário encontrado</p>
+            </CardContent>
+          </Card>
+        ) : (
+          usuariosFiltrados.map((usuario) => (
+            <Card key={usuario._id} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center">
+                    <Avatar className="h-10 w-10 mr-2">
+                      <AvatarFallback>
+                        {getInitials(usuario.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-base">
+                        {usuario.name}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {usuario.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pb-3 pt-2">
+                <div className="grid grid-cols-1 gap-y-2 text-sm">
+                  <div className="flex items-center">
+                    {getCargoIcon(usuario.role)}
+                    <span className="ml-1 font-medium">
+                      {getCargoText(usuario.role)}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Telefone</p>
+                    <p className="font-medium">
+                      {usuario.phone || "Não informado"}
+                    </p>
+                  </div>
+                  <div className="flex items-center text-muted-foreground">
+                    <Calendar className="mr-1 h-3 w-3" />
+                    Criado em{" "}
+                    {new Date(usuario.createdAt).toLocaleDateString("pt-BR")}
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between pt-0 pb-3 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleEditarUsuario(usuario)}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Editar
+                </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      disabled={usuario._id === currentUser?._id}
+                    >
+                      <Trash className="h-4 w-4 mr-1" />
+                      Excluir
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir o usuário "{usuario.name}
+                        "? Esta ação não pode ser desfeita.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleExcluirUsuario(usuario._id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        disabled={loading}
+                      >
+                        {loading ? "Excluindo..." : "Excluir"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
+          ))
+        )}
+      </div>
     </DashboardShell>
   );
 }

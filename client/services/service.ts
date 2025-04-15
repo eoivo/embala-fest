@@ -13,12 +13,13 @@ if (process.env.NODE_ENV === "production") {
 // Configurar interceptores para debug
 axios.interceptors.request.use(
   (config) => {
-    console.log("Request:", {
-      url: config.url,
-      method: config.method,
-      headers: config.headers,
-      data: config.data,
-    });
+    // Não precisamos logar todas as requisições
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Request:", {
+        url: config.url,
+        method: config.method,
+      });
+    }
     return config;
   },
   (error) => {
@@ -29,14 +30,28 @@ axios.interceptors.request.use(
 
 axios.interceptors.response.use(
   (response) => {
-    console.log("Response:", {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data,
-    });
+    // Reduzir logging apenas para produção
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Response:", {
+        status: response.status,
+        statusText: response.statusText,
+      });
+    }
     return response;
   },
   (error) => {
+    // Não logar erros 404 para register/current
+    if (
+      error.config &&
+      error.config.url &&
+      error.config.url.includes("/register/current") &&
+      error.response &&
+      error.response.status === 404
+    ) {
+      // Silenciar este erro específico, mas ainda rejeitá-lo para tratamento
+      return Promise.reject(error);
+    }
+
     console.error("Response Error:", error);
     return Promise.reject(error);
   }
@@ -58,6 +73,7 @@ async function getUserProfile(userId: string, headers: any = {}) {
   try {
     const response = await axios.get(`${API_URL}/users/${userId}`, {
       headers: getHeaders(headers),
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -83,7 +99,7 @@ async function create(resource: string, data: any, headers: any = {}) {
 
     const response = await axios.post(`${API_URL}/${resource}`, data, {
       headers: reqHeaders,
-      withCredentials: false,
+      withCredentials: true,
     });
 
     console.log("Resposta:", response.data);
@@ -98,6 +114,7 @@ async function read(resource: string, headers: any = {}) {
   try {
     const response = await axios.get(`${API_URL}/${resource}`, {
       headers: getHeaders(headers),
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -114,6 +131,7 @@ async function update(
   try {
     const response = await axios.put(`${API_URL}/${resource}/${id}`, data, {
       headers: getHeaders(headers),
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -125,6 +143,7 @@ async function remove(resource: string, id: string, headers: any = {}) {
   try {
     const response = await axios.delete(`${API_URL}/${resource}/${id}`, {
       headers: getHeaders(headers),
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -139,6 +158,7 @@ async function cancelSale(saleId: string, headers: any = {}) {
       {},
       {
         headers: getHeaders(headers),
+        withCredentials: true,
       }
     );
     return response.data;
@@ -157,6 +177,7 @@ async function cancelSaleWithManager(
       managerCredentials,
       {
         headers: getHeaders(),
+        withCredentials: true,
       }
     );
 
@@ -173,6 +194,7 @@ async function cancelSaleWithManager(
         headers: {
           Authorization: `Bearer ${managerToken}`,
         },
+        withCredentials: true,
       }
     );
 
@@ -184,22 +206,16 @@ async function cancelSaleWithManager(
 
 async function uploadAvatar(file: File) {
   try {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error("Usuário não autenticado");
-    }
-
-    // Criar um FormData para enviar o arquivo
     const formData = new FormData();
     formData.append("avatar", file);
 
-    const response = await axios.post(`${API_URL}/users/me/avatar`, formData, {
+    const response = await axios.post(`${API_URL}/users/avatar`, formData, {
       headers: {
         ...getHeaders(),
         "Content-Type": "multipart/form-data",
       },
+      withCredentials: true,
     });
-
     return response.data;
   } catch (error) {
     handleError(error);
@@ -210,6 +226,7 @@ async function getAutoCloseSettings() {
   try {
     const response = await axios.get(`${API_URL}/settings/auto-close`, {
       headers: getHeaders(),
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -228,6 +245,7 @@ async function updateAutoCloseSettings(settings: {
       settings,
       {
         headers: getHeaders(),
+        withCredentials: true,
       }
     );
     return response.data;
@@ -241,6 +259,7 @@ async function getStoreSettings() {
   try {
     const response = await axios.get(`${API_URL}/store-settings`, {
       headers: getHeaders(),
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -266,6 +285,7 @@ async function updateStoreSettings(settings: {
   try {
     const response = await axios.put(`${API_URL}/store-settings`, settings, {
       headers: getHeaders(),
+      withCredentials: true,
     });
     return response.data;
   } catch (error) {
@@ -280,6 +300,7 @@ async function getAvailablePaymentMethods() {
       `${API_URL}/store-settings/payment-methods`,
       {
         headers: getHeaders(),
+        withCredentials: true,
       }
     );
     return response.data;

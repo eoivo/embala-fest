@@ -158,7 +158,7 @@ export default function VendaPage() {
     }
 
     // Resetar seleção
-    setProdutoSelecionado(undefined);
+    setProdutoSelecionado("");
     setQuantidade(1);
 
     toast({
@@ -250,7 +250,7 @@ export default function VendaPage() {
       // Resetar formulário
       setItensVenda([]);
       setFormaPagamento("cash");
-      setClienteSelecionado(undefined);
+      setClienteSelecionado("");
       setDesconto(0);
     } catch (error) {
       console.error("Erro ao finalizar venda:", error);
@@ -272,14 +272,6 @@ export default function VendaPage() {
               Voltar
             </Button>
           </Link>
-          <Button variant="outline">
-            <Printer className="mr-2 h-4 w-4" />
-            Imprimir
-          </Button>
-          <Button variant="outline">
-            <Send className="mr-2 h-4 w-4" />
-            Enviar
-          </Button>
         </div>
       </DashboardHeader>
 
@@ -316,7 +308,7 @@ export default function VendaPage() {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setProdutoSelecionado(undefined)}
+                        onClick={() => setProdutoSelecionado("")}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -360,97 +352,189 @@ export default function VendaPage() {
               </div>
 
               <div className="border rounded-md">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Produto</TableHead>
-                      <TableHead className="text-right">
-                        Preço Unitário
-                      </TableHead>
-                      <TableHead className="text-right">Quantidade</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {itensVenda.length === 0 ? (
+                {/* Versão desktop da tabela - visível apenas em telas md e maiores */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell
-                          colSpan={5}
-                          className="text-center text-muted-foreground py-6"
-                        >
-                          Nenhum produto adicionado
-                        </TableCell>
+                        <TableHead>Produto</TableHead>
+                        <TableHead className="text-right">
+                          Preço Unitário
+                        </TableHead>
+                        <TableHead className="text-right">Quantidade</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
-                    ) : (
-                      itensVenda.map((item) => {
+                    </TableHeader>
+                    <TableBody>
+                      {itensVenda.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={5}
+                            className="text-center text-muted-foreground py-6"
+                          >
+                            Nenhum produto adicionado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        itensVenda.map((item) => {
+                          const produto = produtos.find(
+                            (p) => p._id === item.id
+                          );
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">{item.nome}</div>
+                                  {produto && (
+                                    <div className="text-sm text-muted-foreground">
+                                      Estoque disponível: {produto.stock}
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                R$ {item.preco.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      alterarQuantidade(
+                                        item.id,
+                                        item.quantidade - 1
+                                      )
+                                    }
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="w-8 text-center">
+                                    {item.quantidade}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      alterarQuantidade(
+                                        item.id,
+                                        item.quantidade + 1
+                                      )
+                                    }
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                R$ {item.total.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removerItem(item.id)}
+                                >
+                                  <Trash className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Versão mobile - Cards para telas menores */}
+                <div className="md:hidden">
+                  {itensVenda.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-6">
+                      Nenhum produto adicionado
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {itensVenda.map((item) => {
                         const produto = produtos.find((p) => p._id === item.id);
                         return (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{item.nome}</div>
-                                {produto && (
-                                  <div className="text-sm text-muted-foreground">
-                                    Estoque disponível: {produto.stock}
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              R$ {item.preco.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() =>
-                                    alterarQuantidade(
-                                      item.id,
-                                      item.quantidade - 1
-                                    )
-                                  }
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-8 text-center">
-                                  {item.quantidade}
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() =>
-                                    alterarQuantidade(
-                                      item.id,
-                                      item.quantidade + 1
-                                    )
-                                  }
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              R$ {item.total.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">
+                          <div key={item.id} className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="font-medium">{item.nome}</div>
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-7 w-7 -mt-1 -mr-2"
                                 onClick={() => removerItem(item.id)}
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>
-                            </TableCell>
-                          </TableRow>
+                            </div>
+
+                            {produto && (
+                              <div className="text-sm text-muted-foreground mb-2">
+                                Estoque disponível: {produto.stock}
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-2 py-1 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Preço:
+                                </span>{" "}
+                                <span className="font-medium">
+                                  R$ {item.preco.toFixed(2)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">
+                                  Total:
+                                </span>{" "}
+                                <span className="font-medium">
+                                  R$ {item.total.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center mt-2 border rounded-md">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                className="h-8 flex-1 rounded-r-none"
+                                onClick={() =>
+                                  alterarQuantidade(
+                                    item.id,
+                                    item.quantidade - 1
+                                  )
+                                }
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <div className="flex-1 text-center font-medium">
+                                {item.quantidade}
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                className="h-8 flex-1 rounded-l-none"
+                                onClick={() =>
+                                  alterarQuantidade(
+                                    item.id,
+                                    item.quantidade + 1
+                                  )
+                                }
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
                         );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -486,7 +570,7 @@ export default function VendaPage() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => setClienteSelecionado(undefined)}
+                      onClick={() => setClienteSelecionado("")}
                     >
                       <X className="h-4 w-4" />
                     </Button>

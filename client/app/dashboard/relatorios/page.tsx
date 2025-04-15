@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
@@ -27,6 +28,12 @@ import {
   FileSpreadsheet,
   FileText,
   Loader2,
+  Calendar,
+  CreditCard,
+  DollarSign,
+  PiggyBank,
+  Wallet,
+  ArrowUpDown,
 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
@@ -374,8 +381,9 @@ export default function RelatoriosPage() {
         defaultValue="diario"
         value={activeTab}
         onValueChange={handleTabChange}
+        className="space-y-4"
       >
-        <TabsList className="mb-4">
+        <TabsList className="grid grid-cols-4 sm:grid-cols-4">
           <TabsTrigger value="diario">Diário</TabsTrigger>
           <TabsTrigger value="semanal">Semanal</TabsTrigger>
           <TabsTrigger value="mensal">Mensal</TabsTrigger>
@@ -385,44 +393,46 @@ export default function RelatoriosPage() {
         <TabsContent value="diario">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
                 <div>
                   <CardTitle>Relatório Diário</CardTitle>
                   <CardDescription>
                     Relatório detalhado das vendas do dia
                   </CardDescription>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleExportExcel}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <FileSpreadsheet className="h-4 w-4" />
-                    Exportar Excel
-                  </Button>
-                  <Button
-                    onClick={handleExportPDF}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Exportar PDF
-                  </Button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                  <DatePicker
+                    date={selectedDate}
+                    onDateChange={setSelectedDate}
+                    label="Selecionar data"
+                    className="w-full sm:w-auto"
+                  />
+                  <div className="flex gap-2 mt-2 sm:mt-0">
+                    <Button
+                      onClick={handleExportExcel}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+                    >
+                      <FileSpreadsheet className="h-4 w-4" />
+                      <span className="hidden sm:inline">Exportar Excel</span>
+                      <span className="sm:hidden">Excel</span>
+                    </Button>
+                    <Button
+                      onClick={handleExportPDF}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 flex-1 sm:flex-none justify-center"
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="hidden sm:inline">Exportar PDF</span>
+                      <span className="sm:hidden">PDF</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 flex justify-end">
-                <DatePicker
-                  date={selectedDate}
-                  onDateChange={setSelectedDate}
-                  label="Selecionar data"
-                />
-              </div>
-
               {loading ? (
                 <div className="flex justify-center items-center h-64">
                   <Loader2 className="h-8 w-8 animate-spin" />
@@ -436,7 +446,7 @@ export default function RelatoriosPage() {
                         <CardTitle className="text-sm font-medium">
                           Total Faturado
                         </CardTitle>
-                        <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
@@ -462,7 +472,7 @@ export default function RelatoriosPage() {
                         <CardTitle className="text-sm font-medium">
                           Ticket Médio
                         </CardTitle>
-                        <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
@@ -475,7 +485,7 @@ export default function RelatoriosPage() {
                         <CardTitle className="text-sm font-medium">
                           Cancelamentos
                         </CardTitle>
-                        <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                        <FileText className="h-4 w-4 text-muted-foreground" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
@@ -485,88 +495,186 @@ export default function RelatoriosPage() {
                     </Card>
                   </div>
 
-                  <div className="grid gap-4 mt-4 md:grid-cols-2">
-                    <Card>
+                  <div className="grid gap-4 mt-6 md:grid-cols-2">
+                    <Card className="overflow-hidden">
                       <CardHeader>
                         <CardTitle>Vendas por Forma de Pagamento</CardTitle>
                         <CardDescription>
                           Distribuição das vendas do dia
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Forma de Pagamento</TableHead>
-                              <TableHead className="text-right">
-                                Valor
-                              </TableHead>
-                              <TableHead className="text-right">%</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell>Dinheiro</TableCell>
-                              <TableCell className="text-right">
+                      <CardContent className="p-0">
+                        <div className="md:block hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Forma de Pagamento</TableHead>
+                                <TableHead className="text-right">
+                                  Valor
+                                </TableHead>
+                                <TableHead className="text-right">%</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              <TableRow>
+                                <TableCell className="flex items-center">
+                                  <DollarSign className="h-4 w-4 mr-2 text-green-500" />
+                                  Dinheiro
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    dailyReport.vendasPorFormaPagamento.valores
+                                      .cash
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatPercent(
+                                    dailyReport.vendasPorFormaPagamento
+                                      .percentuais.cash
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell className="flex items-center">
+                                  <CreditCard className="h-4 w-4 mr-2 text-blue-500" />
+                                  Cartão de Crédito
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    dailyReport.vendasPorFormaPagamento.valores
+                                      .credit
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatPercent(
+                                    dailyReport.vendasPorFormaPagamento
+                                      .percentuais.credit
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell className="flex items-center">
+                                  <Wallet className="h-4 w-4 mr-2 text-indigo-500" />
+                                  Cartão de Débito
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    dailyReport.vendasPorFormaPagamento.valores
+                                      .debit
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatPercent(
+                                    dailyReport.vendasPorFormaPagamento
+                                      .percentuais.debit
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                              <TableRow>
+                                <TableCell className="flex items-center">
+                                  <PiggyBank className="h-4 w-4 mr-2 text-purple-500" />
+                                  PIX
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    dailyReport.vendasPorFormaPagamento.valores
+                                      .pix
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatPercent(
+                                    dailyReport.vendasPorFormaPagamento
+                                      .percentuais.pix
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            </TableBody>
+                          </Table>
+                        </div>
+
+                        {/* Versão mobile */}
+                        <div className="md:hidden space-y-3 p-4">
+                          <div className="flex items-center justify-between border-b pb-2">
+                            <div className="flex items-center">
+                              <DollarSign className="h-4 w-4 mr-2 text-green-500" />
+                              <span>Dinheiro</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="font-medium">
                                 {formatCurrency(
                                   dailyReport.vendasPorFormaPagamento.valores
                                     .cash
                                 )}
-                              </TableCell>
-                              <TableCell className="text-right">
+                              </span>
+                              <span className="text-sm text-muted-foreground">
                                 {formatPercent(
                                   dailyReport.vendasPorFormaPagamento
                                     .percentuais.cash
                                 )}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell>Cartão de Crédito</TableCell>
-                              <TableCell className="text-right">
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between border-b pb-2">
+                            <div className="flex items-center">
+                              <CreditCard className="h-4 w-4 mr-2 text-blue-500" />
+                              <span>Cartão de Crédito</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="font-medium">
                                 {formatCurrency(
                                   dailyReport.vendasPorFormaPagamento.valores
                                     .credit
                                 )}
-                              </TableCell>
-                              <TableCell className="text-right">
+                              </span>
+                              <span className="text-sm text-muted-foreground">
                                 {formatPercent(
                                   dailyReport.vendasPorFormaPagamento
                                     .percentuais.credit
                                 )}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell>Cartão de Débito</TableCell>
-                              <TableCell className="text-right">
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between border-b pb-2">
+                            <div className="flex items-center">
+                              <Wallet className="h-4 w-4 mr-2 text-indigo-500" />
+                              <span>Cartão de Débito</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="font-medium">
                                 {formatCurrency(
                                   dailyReport.vendasPorFormaPagamento.valores
                                     .debit
                                 )}
-                              </TableCell>
-                              <TableCell className="text-right">
+                              </span>
+                              <span className="text-sm text-muted-foreground">
                                 {formatPercent(
                                   dailyReport.vendasPorFormaPagamento
                                     .percentuais.debit
                                 )}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell>PIX</TableCell>
-                              <TableCell className="text-right">
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <PiggyBank className="h-4 w-4 mr-2 text-purple-500" />
+                              <span>PIX</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="font-medium">
                                 {formatCurrency(
                                   dailyReport.vendasPorFormaPagamento.valores
                                     .pix
                                 )}
-                              </TableCell>
-                              <TableCell className="text-right">
+                              </span>
+                              <span className="text-sm text-muted-foreground">
                                 {formatPercent(
                                   dailyReport.vendasPorFormaPagamento
                                     .percentuais.pix
                                 )}
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
 
@@ -618,7 +726,9 @@ export default function RelatoriosPage() {
                 </>
               ) : (
                 <div className="flex justify-center items-center h-64">
-                  <p>Nenhum dado disponível para este dia</p>
+                  <p className="text-muted-foreground">
+                    Nenhum dado disponível para a data selecionada
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -637,12 +747,48 @@ export default function RelatoriosPage() {
                 <>
                   <Card>
                     <CardHeader>
-                      <CardTitle>Vendas da Semana</CardTitle>
-                      <CardDescription>
-                        {`Período: ${formatDate(
-                          weeklyReport.periodo.inicio
-                        )} a ${formatDate(weeklyReport.periodo.fim)}`}
-                      </CardDescription>
+                      <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
+                        <div>
+                          <CardTitle>Vendas da Semana</CardTitle>
+                          <CardDescription>
+                            {`Período: ${formatDate(
+                              weeklyReport.periodo.inicio
+                            )} a ${formatDate(weeklyReport.periodo.fim)}`}
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() =>
+                              handleExportWeeklyExcel(
+                                weeklyReport.periodo.inicio
+                              )
+                            }
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            <FileSpreadsheet className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              Exportar Excel
+                            </span>
+                            <span className="sm:hidden">Excel</span>
+                          </Button>
+                          <Button
+                            onClick={() =>
+                              handleExportWeeklyPDF(weeklyReport.periodo.inicio)
+                            }
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-2"
+                          >
+                            <FileText className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              Exportar PDF
+                            </span>
+                            <span className="sm:hidden">PDF</span>
+                          </Button>
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent className="pl-2">
                       <Overview
@@ -657,128 +803,279 @@ export default function RelatoriosPage() {
                   <div className="mt-4">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Relatórios Semanais</CardTitle>
+                        <CardTitle>Histórico Semanal</CardTitle>
                         <CardDescription>
-                          Histórico de relatórios semanais
+                          Relatórios das semanas anteriores
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Período</TableHead>
-                              <TableHead className="text-right">
-                                Total Vendas
-                              </TableHead>
-                              <TableHead className="text-right">
-                                Qtd. Vendas
-                              </TableHead>
-                              <TableHead className="text-right">
-                                Ticket Médio
-                              </TableHead>
-                              <TableHead></TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell>
+                        {/* Versão para desktop - visível apenas em telas md e maiores */}
+                        <div className="hidden md:block">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Período</TableHead>
+                                <TableHead className="text-right">
+                                  Total Vendas
+                                </TableHead>
+                                <TableHead className="text-right">
+                                  Qtd. Vendas
+                                </TableHead>
+                                <TableHead className="text-right">
+                                  Ticket Médio
+                                </TableHead>
+                                <TableHead className="text-right">
+                                  Ações
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              <TableRow className="bg-muted/50">
+                                <TableCell className="font-medium">
+                                  {`${formatDate(
+                                    weeklyReport.periodo.inicio
+                                  )} - ${formatDate(weeklyReport.periodo.fim)}`}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    weeklyReport.totais.totalVendas
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {weeklyReport.totais.qtdVendas}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(
+                                    weeklyReport.totais.ticketMedio
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex gap-2 justify-end">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleExportWeeklyExcel(
+                                          weeklyReport.periodo.inicio
+                                        )
+                                      }
+                                      title="Exportar para Excel"
+                                    >
+                                      <FileSpreadsheet className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleExportWeeklyPDF(
+                                          weeklyReport.periodo.inicio
+                                        )
+                                      }
+                                      title="Exportar para PDF"
+                                    >
+                                      <FileText className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                              {weeklyReport.historicoSemanas.map(
+                                (semana, index) => (
+                                  <TableRow key={index}>
+                                    <TableCell>{semana.periodo}</TableCell>
+                                    <TableCell className="text-right">
+                                      {formatCurrency(semana.totalVendas)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {semana.qtdVendas}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {formatCurrency(semana.ticketMedio)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <div className="flex gap-2 justify-end">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            handleExportWeeklyExcel(
+                                              semana.periodo
+                                            )
+                                          }
+                                          title="Exportar para Excel"
+                                        >
+                                          <FileSpreadsheet className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            handleExportWeeklyPDF(
+                                              semana.periodo
+                                            )
+                                          }
+                                          title="Exportar para PDF"
+                                        >
+                                          <FileText className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+
+                        {/* Versão mobile - Cards para telas menores */}
+                        <div className="md:hidden space-y-4">
+                          {/* Card para semana atual */}
+                          <Card className="bg-muted/50 overflow-hidden">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-base">
+                                Semana Atual
+                              </CardTitle>
+                              <CardDescription>
                                 {`${formatDate(
                                   weeklyReport.periodo.inicio
                                 )} - ${formatDate(weeklyReport.periodo.fim)}`}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(
-                                  weeklyReport.totais.totalVendas
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {weeklyReport.totais.qtdVendas}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(
-                                  weeklyReport.totais.ticketMedio
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex gap-2 justify-end">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() =>
-                                      handleExportWeeklyExcel(
-                                        weeklyReport.periodo.inicio
-                                      )
-                                    }
-                                    title="Exportar para Excel"
-                                  >
-                                    <FileSpreadsheet className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() =>
-                                      handleExportWeeklyPDF(
-                                        weeklyReport.periodo.inicio
-                                      )
-                                    }
-                                    title="Exportar para PDF"
-                                  >
-                                    <FileText className="h-4 w-4" />
-                                  </Button>
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pb-3 pt-2">
+                              <div className="grid grid-cols-2 gap-y-2 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Total Vendas
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatCurrency(
+                                      weeklyReport.totais.totalVendas
+                                    )}
+                                  </p>
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                            {weeklyReport.historicoSemanas.map(
-                              (semana, index) => (
-                                <TableRow key={index}>
-                                  <TableCell>{semana.periodo}</TableCell>
-                                  <TableCell className="text-right">
-                                    {formatCurrency(semana.totalVendas)}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {semana.qtdVendas}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    {formatCurrency(semana.ticketMedio)}
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div className="flex gap-2 justify-end">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          handleExportWeeklyExcel(
-                                            semana.periodo
-                                          )
-                                        }
-                                        title="Exportar para Excel"
-                                      >
-                                        <FileSpreadsheet className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() =>
-                                          handleExportWeeklyPDF(semana.periodo)
-                                        }
-                                        title="Exportar para PDF"
-                                      >
-                                        <FileText className="h-4 w-4" />
-                                      </Button>
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Quantidade
+                                  </p>
+                                  <p className="font-medium">
+                                    {weeklyReport.totais.qtdVendas}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Ticket Médio
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatCurrency(
+                                      weeklyReport.totais.ticketMedio
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                            <CardFooter className="flex justify-between pt-0 pb-3 border-t">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8"
+                                onClick={() =>
+                                  handleExportWeeklyExcel(
+                                    weeklyReport.periodo.inicio
+                                  )
+                                }
+                              >
+                                <FileSpreadsheet className="h-4 w-4 mr-1" />
+                                Excel
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8"
+                                onClick={() =>
+                                  handleExportWeeklyPDF(
+                                    weeklyReport.periodo.inicio
+                                  )
+                                }
+                              >
+                                <FileText className="h-4 w-4 mr-1" />
+                                PDF
+                              </Button>
+                            </CardFooter>
+                          </Card>
+
+                          {/* Cards para histórico de semanas */}
+                          {weeklyReport.historicoSemanas.map(
+                            (semana, index) => (
+                              <Card key={index} className="overflow-hidden">
+                                <CardHeader className="pb-2">
+                                  <CardTitle className="text-base">
+                                    {semana.periodo}
+                                  </CardTitle>
+                                </CardHeader>
+                                <CardContent className="pb-3 pt-2">
+                                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                                    <div>
+                                      <p className="text-muted-foreground">
+                                        Total Vendas
+                                      </p>
+                                      <p className="font-medium">
+                                        {formatCurrency(semana.totalVendas)}
+                                      </p>
                                     </div>
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            )}
-                          </TableBody>
-                        </Table>
+                                    <div>
+                                      <p className="text-muted-foreground">
+                                        Quantidade
+                                      </p>
+                                      <p className="font-medium">
+                                        {semana.qtdVendas}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-muted-foreground">
+                                        Ticket Médio
+                                      </p>
+                                      <p className="font-medium">
+                                        {formatCurrency(semana.ticketMedio)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                                <CardFooter className="flex justify-between pt-0 pb-3 border-t">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8"
+                                    onClick={() =>
+                                      handleExportWeeklyExcel(semana.periodo)
+                                    }
+                                  >
+                                    <FileSpreadsheet className="h-4 w-4 mr-1" />
+                                    Excel
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8"
+                                    onClick={() =>
+                                      handleExportWeeklyPDF(semana.periodo)
+                                    }
+                                  >
+                                    <FileText className="h-4 w-4 mr-1" />
+                                    PDF
+                                  </Button>
+                                </CardFooter>
+                              </Card>
+                            )
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
                 </>
               ) : (
                 <div className="flex justify-center items-center h-64">
-                  <p>Nenhum dado disponível para este período</p>
+                  <p className="text-muted-foreground">
+                    Nenhum dado disponível para este período
+                  </p>
                 </div>
               )}
             </>
@@ -796,114 +1093,93 @@ export default function RelatoriosPage() {
               ) : monthlyReport ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Relatórios Mensais</CardTitle>
-                    <CardDescription>
-                      {`${monthlyReport.periodo.mes} de ${monthlyReport.periodo.ano}`}
-                    </CardDescription>
+                    <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
+                      <div>
+                        <CardTitle>Relatórios Mensais</CardTitle>
+                        <CardDescription>
+                          {`${monthlyReport.periodo.mes} de ${monthlyReport.periodo.ano}`}
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() =>
+                            handleExportMonthlyExcel(
+                              getMonthNumber(monthlyReport.periodo.mes),
+                              monthlyReport.periodo.ano
+                            )
+                          }
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2"
+                        >
+                          <FileSpreadsheet className="h-4 w-4" />
+                          <span className="hidden sm:inline">
+                            Exportar Excel
+                          </span>
+                          <span className="sm:hidden">Excel</span>
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            handleExportMonthlyPDF(
+                              getMonthNumber(monthlyReport.periodo.mes),
+                              monthlyReport.periodo.ano
+                            )
+                          }
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2"
+                        >
+                          <FileText className="h-4 w-4" />
+                          <span className="hidden sm:inline">Exportar PDF</span>
+                          <span className="sm:hidden">PDF</span>
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Período</TableHead>
-                          <TableHead className="text-right">
-                            Total Vendas
-                          </TableHead>
-                          <TableHead className="text-right">
-                            Qtd. Vendas
-                          </TableHead>
-                          <TableHead className="text-right">
-                            Ticket Médio
-                          </TableHead>
-                          <TableHead></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>
-                            {`${monthlyReport.periodo.mes}/${monthlyReport.periodo.ano}`}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(monthlyReport.totais.totalVendas)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {monthlyReport.totais.qtdVendas}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(monthlyReport.totais.ticketMedio)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-2 justify-end">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  handleExportMonthlyExcel(
-                                    getMonthNumber(monthlyReport.periodo.mes),
-                                    monthlyReport.periodo.ano
-                                  )
-                                }
-                                title="Exportar para Excel"
-                              >
-                                <FileSpreadsheet className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  handleExportMonthlyPDF(
-                                    getMonthNumber(monthlyReport.periodo.mes),
-                                    monthlyReport.periodo.ano
-                                  )
-                                }
-                                title="Exportar para PDF"
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {monthlyReport.historicoMeses.map((mes, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{mes.periodo}</TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(mes.totalVendas)}
+                    {/* Versão para desktop - visível apenas em telas md e maiores */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Período</TableHead>
+                            <TableHead className="text-right">
+                              Total Vendas
+                            </TableHead>
+                            <TableHead className="text-right">
+                              Qtd. Vendas
+                            </TableHead>
+                            <TableHead className="text-right">
+                              Ticket Médio
+                            </TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow className="bg-muted/50">
+                            <TableCell className="font-medium">
+                              {`${monthlyReport.periodo.mes}/${monthlyReport.periodo.ano}`}
                             </TableCell>
                             <TableCell className="text-right">
-                              {mes.qtdVendas}
+                              {formatCurrency(monthlyReport.totais.totalVendas)}
                             </TableCell>
                             <TableCell className="text-right">
-                              {formatCurrency(mes.ticketMedio)}
+                              {monthlyReport.totais.qtdVendas}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {formatCurrency(monthlyReport.totais.ticketMedio)}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex gap-2 justify-end">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => {
-                                    // Verificar formato do período
-                                    let month, year;
-                                    if (mes.periodo.includes("/")) {
-                                      const parts = mes.periodo.split("/");
-                                      // Se for no formato "Mês/Ano" (ex: "Março/2025")
-                                      if (isNaN(parseInt(parts[0]))) {
-                                        month = getMonthNumber(parts[0]);
-                                        year = parseInt(parts[1]);
-                                      } else {
-                                        // Se for no formato "MM/AAAA" (ex: "03/2025")
-                                        month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
-                                        year = parseInt(parts[1]);
-                                      }
-                                    } else {
-                                      month = getMonthNumber(mes.periodo);
-                                      year = new Date().getFullYear();
-                                    }
-
-                                    console.log(
-                                      `Exportando Excel para mês ${month} e ano ${year} de período ${mes.periodo}`
-                                    );
-                                    handleExportMonthlyExcel(month, year);
-                                  }}
+                                  onClick={() =>
+                                    handleExportMonthlyExcel(
+                                      getMonthNumber(monthlyReport.periodo.mes),
+                                      monthlyReport.periodo.ano
+                                    )
+                                  }
                                   title="Exportar para Excel"
                                 >
                                   <FileSpreadsheet className="h-4 w-4" />
@@ -911,30 +1187,12 @@ export default function RelatoriosPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => {
-                                    // Verificar formato do período
-                                    let month, year;
-                                    if (mes.periodo.includes("/")) {
-                                      const parts = mes.periodo.split("/");
-                                      // Se for no formato "Mês/Ano" (ex: "Março/2025")
-                                      if (isNaN(parseInt(parts[0]))) {
-                                        month = getMonthNumber(parts[0]);
-                                        year = parseInt(parts[1]);
-                                      } else {
-                                        // Se for no formato "MM/AAAA" (ex: "03/2025")
-                                        month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
-                                        year = parseInt(parts[1]);
-                                      }
-                                    } else {
-                                      month = getMonthNumber(mes.periodo);
-                                      year = new Date().getFullYear();
-                                    }
-
-                                    console.log(
-                                      `Exportando PDF para mês ${month} e ano ${year} de período ${mes.periodo}`
-                                    );
-                                    handleExportMonthlyPDF(month, year);
-                                  }}
+                                  onClick={() =>
+                                    handleExportMonthlyPDF(
+                                      getMonthNumber(monthlyReport.periodo.mes),
+                                      monthlyReport.periodo.ano
+                                    )
+                                  }
                                   title="Exportar para PDF"
                                 >
                                   <FileText className="h-4 w-4" />
@@ -942,14 +1200,252 @@ export default function RelatoriosPage() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                          {monthlyReport.historicoMeses.map((mes, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{mes.periodo}</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(mes.totalVendas)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {mes.qtdVendas}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(mes.ticketMedio)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex gap-2 justify-end">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      // Verificar formato do período
+                                      let month, year;
+                                      if (mes.periodo.includes("/")) {
+                                        const parts = mes.periodo.split("/");
+                                        // Se for no formato "Mês/Ano" (ex: "Março/2025")
+                                        if (isNaN(parseInt(parts[0]))) {
+                                          month = getMonthNumber(parts[0]);
+                                          year = parseInt(parts[1]);
+                                        } else {
+                                          // Se for no formato "MM/AAAA" (ex: "03/2025")
+                                          month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
+                                          year = parseInt(parts[1]);
+                                        }
+                                      } else {
+                                        month = getMonthNumber(mes.periodo);
+                                        year = new Date().getFullYear();
+                                      }
+
+                                      console.log(
+                                        `Exportando Excel para mês ${month} e ano ${year} de período ${mes.periodo}`
+                                      );
+                                      handleExportMonthlyExcel(month, year);
+                                    }}
+                                    title="Exportar para Excel"
+                                  >
+                                    <FileSpreadsheet className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      // Verificar formato do período
+                                      let month, year;
+                                      if (mes.periodo.includes("/")) {
+                                        const parts = mes.periodo.split("/");
+                                        // Se for no formato "Mês/Ano" (ex: "Março/2025")
+                                        if (isNaN(parseInt(parts[0]))) {
+                                          month = getMonthNumber(parts[0]);
+                                          year = parseInt(parts[1]);
+                                        } else {
+                                          // Se for no formato "MM/AAAA" (ex: "03/2025")
+                                          month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
+                                          year = parseInt(parts[1]);
+                                        }
+                                      } else {
+                                        month = getMonthNumber(mes.periodo);
+                                        year = new Date().getFullYear();
+                                      }
+
+                                      console.log(
+                                        `Exportando PDF para mês ${month} e ano ${year} de período ${mes.periodo}`
+                                      );
+                                      handleExportMonthlyPDF(month, year);
+                                    }}
+                                    title="Exportar para PDF"
+                                  >
+                                    <FileText className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Versão mobile - Cards para telas menores */}
+                    <div className="md:hidden space-y-4">
+                      {/* Card para mês atual */}
+                      <Card className="bg-muted/50 overflow-hidden">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">Mês Atual</CardTitle>
+                          <CardDescription>
+                            {`${monthlyReport.periodo.mes}/${monthlyReport.periodo.ano}`}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pb-3 pt-2">
+                          <div className="grid grid-cols-2 gap-y-2 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">
+                                Total Vendas
+                              </p>
+                              <p className="font-medium">
+                                {formatCurrency(
+                                  monthlyReport.totais.totalVendas
+                                )}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">
+                                Quantidade
+                              </p>
+                              <p className="font-medium">
+                                {monthlyReport.totais.qtdVendas}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">
+                                Ticket Médio
+                              </p>
+                              <p className="font-medium">
+                                {formatCurrency(
+                                  monthlyReport.totais.ticketMedio
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between pt-0 pb-3 border-t">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8"
+                            onClick={() =>
+                              handleExportMonthlyExcel(
+                                getMonthNumber(monthlyReport.periodo.mes),
+                                monthlyReport.periodo.ano
+                              )
+                            }
+                          >
+                            <FileSpreadsheet className="h-4 w-4 mr-1" />
+                            Excel
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8"
+                            onClick={() =>
+                              handleExportMonthlyPDF(
+                                getMonthNumber(monthlyReport.periodo.mes),
+                                monthlyReport.periodo.ano
+                              )
+                            }
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            PDF
+                          </Button>
+                        </CardFooter>
+                      </Card>
+
+                      {/* Cards para histórico de meses */}
+                      {monthlyReport.historicoMeses.map((mes, index) => {
+                        // Verificar formato do período
+                        let month, year;
+                        if (mes.periodo.includes("/")) {
+                          const parts = mes.periodo.split("/");
+                          // Se for no formato "Mês/Ano" (ex: "Março/2025")
+                          if (isNaN(parseInt(parts[0]))) {
+                            month = getMonthNumber(parts[0]);
+                            year = parseInt(parts[1]);
+                          } else {
+                            // Se for no formato "MM/AAAA" (ex: "03/2025")
+                            month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
+                            year = parseInt(parts[1]);
+                          }
+                        } else {
+                          month = getMonthNumber(mes.periodo);
+                          year = new Date().getFullYear();
+                        }
+
+                        return (
+                          <Card key={index} className="overflow-hidden">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-base">
+                                {mes.periodo}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pb-3 pt-2">
+                              <div className="grid grid-cols-2 gap-y-2 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Total Vendas
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatCurrency(mes.totalVendas)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Quantidade
+                                  </p>
+                                  <p className="font-medium">{mes.qtdVendas}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Ticket Médio
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatCurrency(mes.ticketMedio)}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                            <CardFooter className="flex justify-between pt-0 pb-3 border-t">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8"
+                                onClick={() =>
+                                  handleExportMonthlyExcel(month, year)
+                                }
+                              >
+                                <FileSpreadsheet className="h-4 w-4 mr-1" />
+                                Excel
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8"
+                                onClick={() =>
+                                  handleExportMonthlyPDF(month, year)
+                                }
+                              >
+                                <FileText className="h-4 w-4 mr-1" />
+                                PDF
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="flex justify-center items-center h-64">
-                  <p>Nenhum dado disponível para este período</p>
+                  <p className="text-muted-foreground">
+                    Nenhum dado disponível para este período
+                  </p>
                 </div>
               )}
             </>
@@ -967,7 +1463,7 @@ export default function RelatoriosPage() {
               ) : productsReport ? (
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
                       <div>
                         <CardTitle>Produtos Mais Vendidos</CardTitle>
                         <CardDescription>
@@ -984,7 +1480,10 @@ export default function RelatoriosPage() {
                           className="flex items-center gap-2"
                         >
                           <FileSpreadsheet className="h-4 w-4" />
-                          Exportar Excel
+                          <span className="hidden sm:inline">
+                            Exportar Excel
+                          </span>
+                          <span className="sm:hidden">Excel</span>
                         </Button>
                         <Button
                           onClick={handleExportProductsPDF}
@@ -993,58 +1492,125 @@ export default function RelatoriosPage() {
                           className="flex items-center gap-2"
                         >
                           <FileText className="h-4 w-4" />
-                          Exportar PDF
+                          <span className="hidden sm:inline">Exportar PDF</span>
+                          <span className="sm:hidden">PDF</span>
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Produto</TableHead>
-                          <TableHead>Categoria</TableHead>
-                          <TableHead className="text-right">
-                            Quantidade
-                          </TableHead>
-                          <TableHead className="text-right">
-                            Valor Total
-                          </TableHead>
-                          <TableHead className="text-right">
-                            % do Faturamento
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productsReport.produtos.slice(0, 10).map((produto) => (
-                          <TableRow key={produto.id}>
-                            <TableCell>{produto.nome}</TableCell>
-                            <TableCell>{produto.categoria}</TableCell>
-                            <TableCell className="text-right">
-                              {produto.quantidade}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(produto.valor)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatPercent(produto.percentualFaturamento)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {productsReport.produtos.length === 0 && (
+                    {/* Versão para desktop - visível apenas em telas md e maiores */}
+                    <div className="hidden md:block">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-4">
-                              Nenhum produto vendido neste período
-                            </TableCell>
+                            <TableHead>Produto</TableHead>
+                            <TableHead>Categoria</TableHead>
+                            <TableHead className="text-right">
+                              Quantidade
+                            </TableHead>
+                            <TableHead className="text-right">
+                              Valor Total
+                            </TableHead>
+                            <TableHead className="text-right">
+                              % do Faturamento
+                            </TableHead>
                           </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {productsReport.produtos
+                            .slice(0, 10)
+                            .map((produto) => (
+                              <TableRow key={produto.id}>
+                                <TableCell>{produto.nome}</TableCell>
+                                <TableCell>{produto.categoria}</TableCell>
+                                <TableCell className="text-right">
+                                  {produto.quantidade}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatCurrency(produto.valor)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {formatPercent(produto.percentualFaturamento)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          {productsReport.produtos.length === 0 && (
+                            <TableRow>
+                              <TableCell
+                                colSpan={5}
+                                className="text-center py-4"
+                              >
+                                Nenhum produto vendido neste período
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Versão mobile - Cards para telas menores */}
+                    <div className="md:hidden space-y-4">
+                      {productsReport.produtos.length === 0 ? (
+                        <Card>
+                          <CardContent className="text-center py-6">
+                            <p className="text-muted-foreground">
+                              Nenhum produto vendido neste período
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        productsReport.produtos.slice(0, 10).map((produto) => (
+                          <Card key={produto.id} className="overflow-hidden">
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-base">
+                                {produto.nome}
+                              </CardTitle>
+                              <CardDescription>
+                                {produto.categoria}
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pb-3 pt-2">
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Quantidade
+                                  </p>
+                                  <p className="font-medium">
+                                    {produto.quantidade}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    Valor Total
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatCurrency(produto.valor)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground">
+                                    % do Faturamento
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatPercent(
+                                      produto.percentualFaturamento
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="flex justify-center items-center h-64">
-                  <p>Nenhum dado disponível para este período</p>
+                  <p className="text-muted-foreground">
+                    Nenhum dado disponível para este período
+                  </p>
                 </div>
               )}
             </>

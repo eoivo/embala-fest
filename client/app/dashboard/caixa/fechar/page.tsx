@@ -210,10 +210,6 @@ export default function FecharCaixaPage() {
               Voltar
             </Button>
           </Link>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar Relatório
-          </Button>
         </div>
       </DashboardHeader>
 

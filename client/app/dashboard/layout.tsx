@@ -15,9 +15,11 @@ export default function DashboardLayout({
           <div className="flex h-16 items-center px-4">
             <div className="flex items-center">
               <div className="flex items-center">
-                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg animate-float">
-                  E
-                </div>
+                <img
+                  src="/logos/logo-icon.png"
+                  alt="EmbalaFest Logo"
+                  className="h-8 w-8"
+                />
                 <span className="ml-2 font-bold text-lg text-primary hidden sm:inline">
                   Embalagens & Festas
                 </span>

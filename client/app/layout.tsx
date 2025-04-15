@@ -20,6 +20,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" href="/logo.png" />
+        <link rel="icon" type="image/png" href="/logos/logo-icon.png" />
+        <link rel="apple-touch-icon" href="/logos/logo-icon.png" />
+      </head>
       <body className={inter.className}>
         {children}
         <Toaster />
@@ -27,5 +33,4 @@ export default function RootLayout({
     </html>
   );
 }
-
 import "./globals.css";

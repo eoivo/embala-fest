@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -25,6 +31,7 @@ import {
   Search,
   Trash,
   AlertTriangle,
+  ArrowUpDown,
 } from "lucide-react";
 import Link from "next/link";
 import { read, update, remove } from "@/services/service";
@@ -65,6 +72,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Address {
   street: string;
@@ -110,6 +124,8 @@ export default function ClientesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [selectedClient, setSelectedClient] = useState<Consumer | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { toast } = useToast();
   const router = useRouter();
@@ -177,12 +193,52 @@ export default function ClientesPage() {
     }
   }, [selectedClient, editModalOpen, form]);
 
-  const clientesFiltrados = clientes.filter(
-    (cliente) =>
-      cliente.name.toLowerCase().includes(busca.toLowerCase()) ||
-      cliente.email.toLowerCase().includes(busca.toLowerCase()) ||
-      cliente.phone.includes(busca)
+  // Função para ordenar clientes
+  const sortClients = (clients: Consumer[]) => {
+    return [...clients].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortBy === "name") {
+        comparison = a.name.localeCompare(b.name);
+      } else if (sortBy === "email") {
+        comparison = a.email.localeCompare(b.email);
+      } else if (sortBy === "totalSales") {
+        comparison = a.totalSales - b.totalSales;
+      } else if (sortBy === "lastSale") {
+        // Compara datas de última compra, tratando valores nulos
+        if (!a.lastSale && !b.lastSale) comparison = 0;
+        else if (!a.lastSale) comparison = -1;
+        else if (!b.lastSale) comparison = 1;
+        else
+          comparison =
+            new Date(a.lastSale).getTime() - new Date(b.lastSale).getTime();
+      } else if (sortBy === "status") {
+        comparison = Number(a.status) - Number(b.status);
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  };
+
+  // Filtrar e ordenar clientes
+  const clientesFiltrados = sortClients(
+    clientes.filter(
+      (cliente) =>
+        cliente.name.toLowerCase().includes(busca.toLowerCase()) ||
+        cliente.email.toLowerCase().includes(busca.toLowerCase()) ||
+        cliente.phone.includes(busca)
+    )
   );
+
+  // Função para alternar a direção da ordenação
+  const toggleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortDirection("asc");
+    }
+  };
 
   const handleViewClient = (cliente: Consumer) => {
     setSelectedClient(cliente);
@@ -267,8 +323,9 @@ export default function ClientesPage() {
       >
         <Link href="/dashboard/clientes/novo">
           <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cliente
+            <Plus className="mr-2 h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Novo Cliente</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </Link>
       </DashboardHeader>
@@ -286,145 +343,346 @@ export default function ClientesPage() {
         </div>
       </div>
 
-      <Card>
-        <div className="rounded-md border">
-          {loading ? (
-            <p className="text-center p-4">Carregando clientes...</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Endereço</TableHead>
-                  <TableHead className="text-right">Total em Compras</TableHead>
-                  <TableHead>Última Compra</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {clientesFiltrados.length === 0 ? (
+      {!loading && clientesFiltrados.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Exibindo {clientesFiltrados.length}{" "}
+          {clientesFiltrados.length === 1 ? "cliente" : "clientes"}
+          {busca && ` para "${busca}"`}
+        </div>
+      )}
+
+      {/* Opções de ordenação para mobile */}
+      <div className="md:hidden mb-4">
+        <Select
+          value={`${sortBy}-${sortDirection}`}
+          onValueChange={(value) => {
+            const [field, direction] = value.split("-");
+            setSortBy(field);
+            setSortDirection(direction as "asc" | "desc");
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Ordenar por..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name-asc">Nome (A-Z)</SelectItem>
+            <SelectItem value="name-desc">Nome (Z-A)</SelectItem>
+            <SelectItem value="email-asc">Email (A-Z)</SelectItem>
+            <SelectItem value="email-desc">Email (Z-A)</SelectItem>
+            <SelectItem value="totalSales-desc">Maiores compradores</SelectItem>
+            <SelectItem value="totalSales-asc">Menores compradores</SelectItem>
+            <SelectItem value="lastSale-desc">Compra mais recente</SelectItem>
+            <SelectItem value="lastSale-asc">Compra mais antiga</SelectItem>
+            <SelectItem value="status-desc">
+              Status (Ativos primeiro)
+            </SelectItem>
+            <SelectItem value="status-asc">
+              Status (Inativos primeiro)
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Versão para desktop (tabela) - mostrada apenas em telas md e maiores */}
+      <div className="hidden md:block">
+        <Card>
+          <div className="rounded-md border">
+            {loading ? (
+              <p className="text-center p-4">Carregando clientes...</p>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="text-center text-muted-foreground py-6"
-                    >
-                      Nenhum cliente encontrado
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  clientesFiltrados.map((cliente) => (
-                    <TableRow key={cliente._id}>
-                      <TableCell>
-                        <div className="font-medium">{cliente.name}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Mail className="mr-1 h-3 w-3" />
-                            {cliente.email}
-                          </div>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Phone className="mr-1 h-3 w-3" />
-                            {cliente.phone}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <MapPin className="mr-1 h-3 w-3" />
-                          {cliente.address.street}, {cliente.address.number} -{" "}
-                          {cliente.address.city}, {cliente.address.state}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        R$ {cliente.totalSales.toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        {cliente.lastSale
-                          ? new Date(cliente.lastSale).toLocaleDateString()
-                          : "Nenhuma"}
-                      </TableCell>
-                      <TableCell>
-                        {Boolean(cliente.status) ? (
-                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                            Ativo
-                          </Badge>
-                        ) : (
-                          <Badge
-                            variant="outline"
-                            className="text-muted-foreground"
-                          >
-                            Inativo
-                          </Badge>
+                    <TableHead>
+                      <div
+                        className="flex items-center cursor-pointer"
+                        onClick={() => toggleSort("name")}
+                      >
+                        Nome
+                        {sortBy === "name" && (
+                          <ArrowUpDown className="ml-1 h-4 w-4" />
                         )}
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div
+                        className="flex items-center cursor-pointer"
+                        onClick={() => toggleSort("email")}
+                      >
+                        Contato
+                        {sortBy === "email" && (
+                          <ArrowUpDown className="ml-1 h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead>Endereço</TableHead>
+                    <TableHead className="text-right">
+                      <div
+                        className="flex items-center justify-end cursor-pointer"
+                        onClick={() => toggleSort("totalSales")}
+                      >
+                        Total em Compras
+                        {sortBy === "totalSales" && (
+                          <ArrowUpDown className="ml-1 h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div
+                        className="flex items-center cursor-pointer"
+                        onClick={() => toggleSort("lastSale")}
+                      >
+                        Última Compra
+                        {sortBy === "lastSale" && (
+                          <ArrowUpDown className="ml-1 h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div
+                        className="flex items-center cursor-pointer"
+                        onClick={() => toggleSort("status")}
+                      >
+                        Status
+                        {sortBy === "status" && (
+                          <ArrowUpDown className="ml-1 h-4 w-4" />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clientesFiltrados.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-center text-muted-foreground py-6"
+                      >
+                        Nenhum cliente encontrado
                       </TableCell>
+                    </TableRow>
+                  ) : (
+                    clientesFiltrados.map((cliente) => (
+                      <TableRow key={cliente._id}>
+                        <TableCell>
+                          <div className="font-medium">{cliente.name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <Mail className="mr-1 h-3 w-3" />
+                              {cliente.email}
+                            </div>
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <Phone className="mr-1 h-3 w-3" />
+                              {cliente.phone}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <MapPin className="mr-1 h-3 w-3" />
+                            {cliente.address.street}, {cliente.address.number} -{" "}
+                            {cliente.address.city}, {cliente.address.state}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          R$ {cliente.totalSales.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          {cliente.lastSale
+                            ? new Date(cliente.lastSale).toLocaleDateString()
+                            : "Nenhuma"}
+                        </TableCell>
+                        <TableCell>
+                          {Boolean(cliente.status) ? (
+                            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                              Ativo
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-muted-foreground"
+                            >
+                              Inativo
+                            </Badge>
+                          )}
+                        </TableCell>
 
-                      <TableCell className="text-right">
-                        <div className="flex justify-end space-x-1">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleViewClient(cliente)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Visualizar cliente</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEditClient(cliente)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Editar cliente</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          {isAdmin && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-1">
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    onClick={() => handleDeleteConfirm(cliente)}
+                                    onClick={() => handleViewClient(cliente)}
                                   >
-                                    <Trash className="h-4 w-4" />
+                                    <Eye className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Excluir cliente</p>
+                                  <p>Visualizar cliente</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEditClient(cliente)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Editar cliente</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            {isAdmin && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleDeleteConfirm(cliente)
+                                      }
+                                    >
+                                      <Trash className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Excluir cliente</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Versão para dispositivos móveis (cards) - mostrada apenas em telas menores que md */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">Carregando clientes...</p>
+            </CardContent>
+          </Card>
+        ) : clientesFiltrados.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+            </CardContent>
+          </Card>
+        ) : (
+          clientesFiltrados.map((cliente) => (
+            <Card key={cliente._id} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-base">{cliente.name}</CardTitle>
+                    <div className="flex items-center text-sm text-muted-foreground mt-1">
+                      <Mail className="mr-1 h-3 w-3" />
+                      {cliente.email}
+                    </div>
+                  </div>
+                  {Boolean(cliente.status) ? (
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100 ml-2 self-start">
+                      Ativo
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="text-muted-foreground ml-2 self-start"
+                    >
+                      Inativo
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pb-3 pt-2">
+                <div className="grid grid-cols-1 gap-y-2 text-sm">
+                  <div className="flex items-center text-muted-foreground">
+                    <Phone className="mr-1 h-3 w-3" />
+                    {cliente.phone}
+                  </div>
+                  <div className="flex items-center text-muted-foreground">
+                    <MapPin className="mr-1 h-3 w-3" />
+                    {cliente.address.street}, {cliente.address.number}
+                    <br />
+                    {cliente.address.city}, {cliente.address.state}
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 mt-1">
+                    <div>
+                      <p className="text-muted-foreground">Total em compras</p>
+                      <p className="font-medium">
+                        R$ {cliente.totalSales.toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Última compra</p>
+                      <p className="font-medium">
+                        {cliente.lastSale
+                          ? new Date(cliente.lastSale).toLocaleDateString()
+                          : "Nenhuma"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end pt-0 pb-3 gap-2 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleViewClient(cliente)}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Ver
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleEditClient(cliente)}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Editar
+                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => handleDeleteConfirm(cliente)}
+                  >
+                    <Trash className="h-4 w-4 mr-1" />
+                    Excluir
+                  </Button>
                 )}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      </Card>
+              </CardFooter>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Modal de Visualização */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>

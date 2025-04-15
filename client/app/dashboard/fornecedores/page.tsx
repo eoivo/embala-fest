@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -15,7 +21,7 @@ import {
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Eye, Plus, Search, Trash } from "lucide-react";
+import { Edit, Eye, Plus, Search, Trash, ArrowUpDown } from "lucide-react";
 import Link from "next/link";
 import {
   supplierService,
@@ -60,6 +66,13 @@ import {
 } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import axios from "axios";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Função para formatar CNPJ
 const formatCNPJ = (value: string) => {
@@ -135,6 +148,8 @@ export default function FornecedoresPage() {
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierUI | null>(
     null
   );
+  const [sortBy, setSortBy] = useState<string>("nome");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -200,14 +215,45 @@ export default function FornecedoresPage() {
     fetchFornecedores();
   }, [toast]);
 
-  // Filtrar fornecedores com base na busca
-  const fornecedoresFiltrados = fornecedores.filter(
-    (fornecedor) =>
-      fornecedor.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      fornecedor.nomeContato.toLowerCase().includes(busca.toLowerCase()) ||
-      fornecedor.email.toLowerCase().includes(busca.toLowerCase()) ||
-      fornecedor.cnpj.toLowerCase().includes(busca.toLowerCase())
+  // Função para ordenar fornecedores
+  const sortSuppliers = (suppliers: SupplierUI[]) => {
+    return [...suppliers].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortBy === "nome") {
+        comparison = a.nome.localeCompare(b.nome);
+      } else if (sortBy === "nomeContato") {
+        comparison = a.nomeContato.localeCompare(b.nomeContato);
+      } else if (sortBy === "email") {
+        comparison = a.email.localeCompare(b.email);
+      } else if (sortBy === "ativo") {
+        comparison = Number(a.ativo) - Number(b.ativo);
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  };
+
+  // Filtrar e ordenar fornecedores
+  const fornecedoresFiltrados = sortSuppliers(
+    fornecedores.filter(
+      (fornecedor) =>
+        fornecedor.nome.toLowerCase().includes(busca.toLowerCase()) ||
+        fornecedor.nomeContato.toLowerCase().includes(busca.toLowerCase()) ||
+        fornecedor.email.toLowerCase().includes(busca.toLowerCase()) ||
+        fornecedor.cnpj.toLowerCase().includes(busca.toLowerCase())
+    )
   );
+
+  // Função para alternar a direção da ordenação
+  const toggleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortDirection("asc");
+    }
+  };
 
   // Função para excluir fornecedor
   const handleExcluirFornecedor = async () => {
@@ -416,37 +462,113 @@ export default function FornecedoresPage() {
         description="Gerencie os fornecedores da sua loja"
       >
         <Button onClick={() => setCreateModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Fornecedor
+          <Plus className="mr-2 h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Novo Fornecedor</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </DashboardHeader>
 
-      <div className="grid gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar fornecedores..."
-                className="pl-8"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-              />
-            </div>
-          </div>
-        </Card>
+      <div className="flex items-center mb-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar fornecedores..."
+            className="pl-8"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+      </div>
 
+      {!loading && fornecedoresFiltrados.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Exibindo {fornecedoresFiltrados.length}{" "}
+          {fornecedoresFiltrados.length === 1 ? "fornecedor" : "fornecedores"}
+          {busca && ` para "${busca}"`}
+        </div>
+      )}
+
+      {/* Opções de ordenação para mobile */}
+      <div className="md:hidden mb-4">
+        <Select
+          value={`${sortBy}-${sortDirection}`}
+          onValueChange={(value) => {
+            const [field, direction] = value.split("-");
+            setSortBy(field);
+            setSortDirection(direction as "asc" | "desc");
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Ordenar por..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nome-asc">Nome (A-Z)</SelectItem>
+            <SelectItem value="nome-desc">Nome (Z-A)</SelectItem>
+            <SelectItem value="nomeContato-asc">Contato (A-Z)</SelectItem>
+            <SelectItem value="nomeContato-desc">Contato (Z-A)</SelectItem>
+            <SelectItem value="email-asc">Email (A-Z)</SelectItem>
+            <SelectItem value="email-desc">Email (Z-A)</SelectItem>
+            <SelectItem value="ativo-desc">Status (Ativos primeiro)</SelectItem>
+            <SelectItem value="ativo-asc">
+              Status (Inativos primeiro)
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Versão para desktop (tabela) - mostrada apenas em telas md e maiores */}
+      <div className="hidden md:block">
         <Card>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => toggleSort("nome")}
+                  >
+                    Nome
+                    {sortBy === "nome" && (
+                      <ArrowUpDown className="ml-1 h-4 w-4" />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => toggleSort("nomeContato")}
+                  >
+                    Contato
+                    {sortBy === "nomeContato" && (
+                      <ArrowUpDown className="ml-1 h-4 w-4" />
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => toggleSort("email")}
+                  >
+                    Email
+                    {sortBy === "email" && (
+                      <ArrowUpDown className="ml-1 h-4 w-4" />
+                    )}
+                  </div>
+                </TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead>CNPJ</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>
+                  <div
+                    className="flex items-center cursor-pointer"
+                    onClick={() => toggleSort("ativo")}
+                  >
+                    Status
+                    {sortBy === "ativo" && (
+                      <ArrowUpDown className="ml-1 h-4 w-4" />
+                    )}
+                  </div>
+                </TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -546,6 +668,105 @@ export default function FornecedoresPage() {
             </TableBody>
           </Table>
         </Card>
+      </div>
+
+      {/* Versão para dispositivos móveis (cards) - mostrada apenas em telas menores que md */}
+      <div className="md:hidden space-y-4">
+        {loading ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">
+                Carregando fornecedores...
+              </p>
+            </CardContent>
+          </Card>
+        ) : fornecedoresFiltrados.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">
+                {busca
+                  ? "Nenhum fornecedor encontrado para a busca"
+                  : "Nenhum fornecedor cadastrado"}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          fornecedoresFiltrados.map((fornecedor) => (
+            <Card key={fornecedor.id} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-base">
+                      {fornecedor.nome}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Contato: {fornecedor.nomeContato}
+                    </p>
+                  </div>
+                  {Boolean(fornecedor.ativo) ? (
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100 ml-2 self-start">
+                      Ativo
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="text-muted-foreground ml-2 self-start"
+                    >
+                      Inativo
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pb-3 pt-2">
+                <div className="grid grid-cols-1 gap-y-2 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Email</p>
+                    <p className="font-medium">{fornecedor.email}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4">
+                    <div>
+                      <p className="text-muted-foreground">Telefone</p>
+                      <p className="font-medium">{fornecedor.telefone}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">CNPJ</p>
+                      <p className="font-medium">{fornecedor.cnpj}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end pt-0 pb-3 gap-2 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleViewSupplier(fornecedor)}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Ver
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleEditSupplier(fornecedor)}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Editar
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                  onClick={() => setFornecedorParaExcluir(fornecedor.id)}
+                >
+                  <Trash className="h-4 w-4 mr-1" />
+                  Excluir
+                </Button>
+              </CardFooter>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Modal de confirmação de exclusão */}

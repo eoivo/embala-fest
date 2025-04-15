@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -25,6 +31,9 @@ import {
   ShoppingBag,
   X,
   Ban,
+  ArrowUpDown,
+  MessageSquare,
+  XCircle,
 } from "lucide-react";
 import {
   Select,
@@ -214,6 +223,8 @@ export default function PedidosPage() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showManagerAuth, setShowManagerAuth] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [storeSettings, setStoreSettings] = useState({
     storeName: "EmbalaFest",
     cnpj: "",
@@ -291,16 +302,54 @@ export default function PedidosPage() {
     fetchData();
   }, []);
 
-  const pedidosFiltrados = pedidos.filter(
-    (pedido) =>
-      ((consumers[pedido.consumer || ""]?.name || "Cliente não informado")
-        .toLowerCase()
-        .includes(busca.toLowerCase()) ||
-        pedido._id.toLowerCase().includes(busca.toLowerCase())) &&
-      (filtroStatus === "" ||
-        filtroStatus === "todos" ||
-        pedido.status === filtroStatus)
+  // Função para ordenar pedidos
+  const sortPedidos = (pedidos: ISale[]) => {
+    return [...pedidos].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortBy === "createdAt") {
+        comparison =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      } else if (sortBy === "total") {
+        comparison = a.total - b.total;
+      } else if (sortBy === "status") {
+        comparison = a.status.localeCompare(b.status);
+      } else if (sortBy === "client") {
+        const clienteA =
+          consumers[a.consumer || ""]?.name || "Cliente não informado";
+        const clienteB =
+          consumers[b.consumer || ""]?.name || "Cliente não informado";
+        comparison = clienteA.localeCompare(clienteB);
+      } else if (sortBy === "items") {
+        comparison = a.products.length - b.products.length;
+      }
+
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  };
+
+  const pedidosFiltrados = sortPedidos(
+    pedidos.filter(
+      (pedido) =>
+        ((consumers[pedido.consumer || ""]?.name || "Cliente não informado")
+          .toLowerCase()
+          .includes(busca.toLowerCase()) ||
+          pedido._id.toLowerCase().includes(busca.toLowerCase())) &&
+        (filtroStatus === "" ||
+          filtroStatus === "todos" ||
+          pedido.status === filtroStatus)
+    )
   );
+
+  // Função para alternar a direção da ordenação
+  const toggleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortDirection("desc");
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -595,7 +644,8 @@ export default function PedidosPage() {
         <Link href="/dashboard/caixa/venda">
           <Button>
             <ShoppingBag className="mr-2 h-4 w-4" />
-            Novo Pedido
+            <span className="hidden sm:inline">Novo Pedido</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </Link>
       </DashboardHeader>
@@ -626,164 +676,373 @@ export default function PedidosPage() {
         </div>
       </div>
 
-      <Card>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pedido</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Itens</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead>Pagamento</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pedidosFiltrados.length === 0 ? (
+      {!isLoading && pedidosFiltrados.length > 0 && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Exibindo {pedidosFiltrados.length}{" "}
+          {pedidosFiltrados.length === 1 ? "pedido" : "pedidos"}
+          {busca && ` para "${busca}"`}
+          {filtroStatus !== "todos" && ` com status "${filtroStatus}"`}
+        </div>
+      )}
+
+      {/* Opções de ordenação para mobile */}
+      <div className="md:hidden mb-4">
+        <Select
+          value={`${sortBy}-${sortDirection}`}
+          onValueChange={(value) => {
+            const [field, direction] = value.split("-");
+            setSortBy(field);
+            setSortDirection(direction as "asc" | "desc");
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Ordenar por..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="createdAt-desc">Data (Mais recente)</SelectItem>
+            <SelectItem value="createdAt-asc">Data (Mais antiga)</SelectItem>
+            <SelectItem value="total-desc">Valor (Maior)</SelectItem>
+            <SelectItem value="total-asc">Valor (Menor)</SelectItem>
+            <SelectItem value="client-asc">Cliente (A-Z)</SelectItem>
+            <SelectItem value="client-desc">Cliente (Z-A)</SelectItem>
+            <SelectItem value="items-desc">Mais itens</SelectItem>
+            <SelectItem value="items-asc">Menos itens</SelectItem>
+            <SelectItem value="status-asc">Status (A-Z)</SelectItem>
+            <SelectItem value="status-desc">Status (Z-A)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Versão para desktop - visível apenas em telas md e maiores */}
+      <div className="hidden md:block">
+        <Card>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="text-center text-muted-foreground py-6"
-                  >
-                    Nenhum pedido encontrado
-                  </TableCell>
+                  <TableHead>Pedido</TableHead>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("client")}
+                    >
+                      Cliente
+                      {sortBy === "client" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("createdAt")}
+                    >
+                      Data
+                      {sortBy === "createdAt" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("items")}
+                    >
+                      Itens
+                      {sortBy === "items" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <div
+                      className="flex items-center justify-end cursor-pointer"
+                      onClick={() => toggleSort("total")}
+                    >
+                      Valor
+                      {sortBy === "total" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>Pagamento</TableHead>
+                  <TableHead>
+                    <div
+                      className="flex items-center cursor-pointer"
+                      onClick={() => toggleSort("status")}
+                    >
+                      Status
+                      {sortBy === "status" && (
+                        <ArrowUpDown className="ml-1 h-4 w-4" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ) : (
-                pedidosFiltrados.map((pedido) => (
-                  <TableRow
-                    key={pedido._id}
-                    className={
-                      pedido.status === "cancelled"
-                        ? "bg-muted/50 text-muted-foreground"
-                        : ""
-                    }
-                  >
-                    <TableCell>
-                      <div className="font-medium flex items-center">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 p-1"
-                                onClick={() => toggleShowFullId(pedido._id)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Mostrar ID completo</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        {showFullId === pedido._id
-                          ? pedido._id
-                          : `${pedido._id.substring(0, 6)}...`}
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {pedidosFiltrados.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="text-center text-muted-foreground py-6"
+                    >
+                      Nenhum pedido encontrado
                     </TableCell>
-                    <TableCell>
-                      {consumers[pedido.consumer || ""]?.name ||
-                        "Cliente não informado"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <Calendar className="mr-1 h-3 w-3 text-muted-foreground" />
-                        {new Date(pedido.createdAt).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell>{pedido.products.length}</TableCell>
-                    <TableCell className="text-right">
-                      R$ {pedido.total.toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      {traduzirFormaPagamento(pedido.paymentMethod)}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(pedido.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-1">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleVisualizarPedido(pedido)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Visualizar venda</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleImprimirPedido(pedido)}
-                              >
-                                <Printer className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Imprimir recibo</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEnviarWhatsapp(pedido)}
-                              >
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Enviar por WhatsApp</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        {pedido.status !== "cancelled" && (
+                  </TableRow>
+                ) : (
+                  pedidosFiltrados.map((pedido) => (
+                    <TableRow
+                      key={pedido._id}
+                      className={
+                        pedido.status === "cancelled"
+                          ? "bg-muted/50 text-muted-foreground"
+                          : ""
+                      }
+                    >
+                      <TableCell>
+                        <div className="font-medium flex items-center">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleCancelarPedido(pedido)}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                                  className="h-6 w-6 p-1"
+                                  onClick={() => toggleShowFullId(pedido._id)}
                                 >
-                                  <Ban className="h-4 w-4" />
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Cancelar venda</p>
+                                <p>Mostrar ID completo</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+                          {showFullId === pedido._id
+                            ? pedido._id
+                            : `${pedido._id.substring(0, 6)}...`}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {consumers[pedido.consumer || ""]?.name ||
+                          "Cliente não informado"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Calendar className="mr-1 h-3 w-3 text-muted-foreground" />
+                          {new Date(pedido.createdAt).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>{pedido.products.length}</TableCell>
+                      <TableCell className="text-right">
+                        R$ {pedido.total.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        {traduzirFormaPagamento(pedido.paymentMethod)}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(pedido.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-1">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleVisualizarPedido(pedido)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Visualizar venda</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleImprimirPedido(pedido)}
+                                >
+                                  <Printer className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Imprimir recibo</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEnviarWhatsapp(pedido)}
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Enviar por WhatsApp</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          {pedido.status !== "cancelled" && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleCancelarPedido(pedido)}
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Cancelar venda</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
+      </div>
+
+      {/* Versão para dispositivos móveis (cards) - visível apenas em telas menores que md */}
+      <div className="md:hidden space-y-4">
+        {isLoading ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">Carregando pedidos...</p>
+            </CardContent>
+          </Card>
+        ) : pedidosFiltrados.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-6">
+              <p className="text-muted-foreground">Nenhum pedido encontrado</p>
+            </CardContent>
+          </Card>
+        ) : (
+          pedidosFiltrados.map((pedido) => (
+            <Card
+              key={pedido._id}
+              className={
+                pedido.status === "cancelled"
+                  ? "bg-muted/50 text-muted-foreground overflow-hidden"
+                  : "overflow-hidden"
+              }
+            >
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-base flex items-center">
+                      ID:{" "}
+                      {showFullId === pedido._id
+                        ? pedido._id
+                        : `${pedido._id.substring(0, 6)}...`}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 p-1 ml-1"
+                        onClick={() => toggleShowFullId(pedido._id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {consumers[pedido.consumer || ""]?.name ||
+                        "Cliente não informado"}
+                    </div>
+                  </div>
+                  <div>{getStatusBadge(pedido.status)}</div>
+                </div>
+              </CardHeader>
+              <CardContent className="pb-3 pt-2">
+                <div className="grid grid-cols-1 gap-y-2 text-sm">
+                  <div className="flex items-center text-muted-foreground">
+                    <Calendar className="mr-1 h-3 w-3" />
+                    {new Date(pedido.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 mt-1">
+                    <div>
+                      <p className="text-muted-foreground">Itens</p>
+                      <p className="font-medium">{pedido.products.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Valor total</p>
+                      <p className="font-medium">
+                        R$ {pedido.total.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Pagamento</p>
+                    <p className="font-medium">
+                      {traduzirFormaPagamento(pedido.paymentMethod)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between pt-0 pb-3 border-t">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleVisualizarPedido(pedido)}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Ver
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleImprimirPedido(pedido)}
+                >
+                  <Printer className="h-4 w-4 mr-1" />
+                  Imprimir
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => handleEnviarWhatsapp(pedido)}
+                >
+                  <MessageSquare className="h-4 w-4 mr-1" />
+                  WhatsApp
+                </Button>
+                {pedido.status !== "cancelled" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                    onClick={() => handleCancelarPedido(pedido)}
+                  >
+                    <XCircle className="h-4 w-4 mr-1" />
+                    Cancelar
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Modal de Visualização do Pedido */}
       {pedidoSelecionado && (

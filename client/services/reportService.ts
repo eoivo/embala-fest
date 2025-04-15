@@ -114,6 +114,7 @@ export const reportService = {
       const params = date ? `?date=${date}` : "";
       const response = await axios.get(`${API_URL}/reports/daily${params}`, {
         headers: getHeaders(),
+        withCredentials: true,
       });
       return response.data;
     } catch (error: any) {
@@ -132,6 +133,7 @@ export const reportService = {
       const params = startDate ? `?startDate=${startDate}` : "";
       const response = await axios.get(`${API_URL}/reports/weekly${params}`, {
         headers: getHeaders(),
+        withCredentials: true,
       });
       return response.data;
     } catch (error: any) {
@@ -161,6 +163,7 @@ export const reportService = {
 
       const response = await axios.get(`${API_URL}/reports/monthly${params}`, {
         headers: getHeaders(),
+        withCredentials: true,
       });
       return response.data;
     } catch (error: any) {
@@ -190,6 +193,7 @@ export const reportService = {
 
       const response = await axios.get(`${API_URL}/reports/products${params}`, {
         headers: getHeaders(),
+        withCredentials: true,
       });
       return response.data;
     } catch (error: any) {
@@ -214,6 +218,7 @@ export const exportDailyReportToExcel = async (date?: string) => {
           Authorization: `Bearer ${token}`,
         },
         responseType: "blob",
+        withCredentials: true,
       }
     );
 
@@ -283,6 +288,7 @@ export const exportWeeklyReportToExcel = async (startDate?: string) => {
           Authorization: `Bearer ${token}`,
         },
         responseType: "blob",
+        withCredentials: true,
       }
     );
 
@@ -366,6 +372,7 @@ export const exportMonthlyReportToExcel = async (
           Authorization: `Bearer ${token}`,
         },
         responseType: "blob",
+        withCredentials: true,
       }
     );
 
@@ -409,6 +416,7 @@ export const exportMonthlyReportToPDF = async (
           Authorization: `Bearer ${token}`,
         },
         responseType: "blob",
+        withCredentials: true,
       }
     );
 
@@ -452,6 +460,7 @@ export const exportProductsReportToExcel = async (
           Authorization: `Bearer ${token}`,
         },
         responseType: "blob",
+        withCredentials: true,
       }
     );
 

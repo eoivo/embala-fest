@@ -34,9 +34,17 @@ export default function AbrirCaixaPage() {
     const checkCurrentRegister = async () => {
       try {
         setLoading(true);
-        const currentRegister = await registerService.getCurrentRegister();
 
-        if (currentRegister && currentRegister.status === "open") {
+        // Em vez de verificar o caixa diretamente (que causaria 404),
+        // vamos verificar o dashboard que retorna status: "open" ou "closed"
+        const dashboard = await registerService.getDashboard();
+
+        // Se o dashboard indica que tem caixa aberto
+        if (
+          dashboard &&
+          dashboard.status === "open" &&
+          dashboard.currentRegister
+        ) {
           setHasOpenRegister(true);
           toast({
             title: "Atenção",
@@ -46,7 +54,8 @@ export default function AbrirCaixaPage() {
           router.push("/dashboard/caixa/venda");
         }
       } catch (error) {
-        // Se não tiver caixa aberto, não faz nada
+        // Erro ao verificar dashboard
+        console.error("Erro ao verificar status do caixa:", error);
       } finally {
         setLoading(false);
       }

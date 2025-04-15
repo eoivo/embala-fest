@@ -29,11 +29,11 @@ export function RecentSales({ data }: RecentSalesProps) {
                 .toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="ml-4 space-y-1">
-            <div className="text-sm font-medium leading-none flex items-center">
+          <div className="ml-4 space-y-1 flex-1">
+            <div className="text-sm font-medium leading-none flex flex-wrap items-center gap-2">
               <span>{venda.cliente}</span>
               {venda.status === "cancelled" && (
-                <Badge variant="destructive" className="ml-2 text-xs">
+                <Badge variant="destructive" className="text-xs">
                   Cancelado
                 </Badge>
               )}

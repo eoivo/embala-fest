@@ -1,4 +1,35 @@
 import { create, read } from "../../../services/service";
+import axios from "axios";
+
+// Função auxiliar para obter caixa atual sem exibir erros no console
+const silentRead = async (resource: string) => {
+  try {
+    // Fazendo a requisição diretamente, sem usar o serviço read que loga erros
+    const API_URL =
+      process.env.NODE_ENV === "production"
+        ? "/api"
+        : "http://localhost:3000/api";
+
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const headers = {
+      Authorization: token ? `Bearer ${token}` : "",
+    };
+
+    const response = await axios.get(`${API_URL}/${resource}`, {
+      headers,
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error: any) {
+    // Silencia erros 404 (caixa não encontrado)
+    if (error.response && error.response.status === 404) {
+      return null;
+    }
+    // Repassa outros erros
+    throw error;
+  }
+};
 
 export const registerService = {
   // Abrir caixa
@@ -7,6 +38,19 @@ export const registerService = {
       const response = await create("register/open", { initialBalance });
       return response;
     } catch (error) {
+      throw error;
+    }
+  },
+
+  // Obter caixa atual - versão silenciosa que não loga erro 404
+  getCurrentRegister: async () => {
+    try {
+      // Usando nossa função auxiliar silenciosa
+      const response = await silentRead("register/current");
+      return response;
+    } catch (error) {
+      // Apenas logs para erros que não sejam 404
+      console.error("Erro ao obter caixa atual:", error);
       throw error;
     }
   },
@@ -36,16 +80,6 @@ export const registerService = {
   }) => {
     try {
       const response = await create("users/authenticate-manager", credentials);
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Obter caixa atual
-  getCurrentRegister: async () => {
-    try {
-      const response = await read("register/current");
       return response;
     } catch (error) {
       throw error;

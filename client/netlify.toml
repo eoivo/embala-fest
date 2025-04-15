@@ -13,7 +13,7 @@ package = "@netlify/plugin-nextjs"
   force = true
 
   [redirects.headers]
-    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Origin = "https://embalafest.netlify.app"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
 
@@ -26,7 +26,7 @@ package = "@netlify/plugin-nextjs"
   methods = ["OPTIONS"]
   
   [redirects.headers]
-    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Origin = "https://embalafest.netlify.app"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
     Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
 

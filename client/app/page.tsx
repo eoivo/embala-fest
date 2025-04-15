@@ -17,9 +17,11 @@ export default function LandingPage() {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl animate-float">
-              E
-            </div>
+            <img
+              src="/logos/logo-icon.png"
+              alt="EmbalaFest Logo"
+              className="h-10 w-10"
+            />
             <span className="ml-2 font-bold text-xl text-primary">
               EmbalaFest
             </span>
@@ -44,6 +46,17 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
+        {/* Menu móvel */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-card border-t py-3 px-4 animate-accordion-down">
+            <Link href="/login" className="block">
+              <Button variant="ghost" className="w-full justify-start gap-2">
+                <User className="h-4 w-4" />
+                Entrar
+              </Button>
+            </Link>
+          </div>
+        )}
       </header>
 
       {/* Main Content */}
@@ -111,9 +124,11 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-                E
-              </div>
+              <img
+                src="/logos/logo-icon.png"
+                alt="EmbalaFest Logo"
+                className="h-8 w-8"
+              />
               <span className="ml-2 font-bold text-lg text-primary">
                 EmbalaFest
               </span>

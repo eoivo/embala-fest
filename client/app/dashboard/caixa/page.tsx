@@ -33,13 +33,17 @@ export default function CaixaPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [registerHistory, setRegisterHistory] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         const data = await registerService.getDashboard();
+        const history = await registerService.getRegisterHistory();
+
         setDashboardData(data);
+        setRegisterHistory(Array.isArray(history) ? history : []);
       } catch (error: any) {
         toast({
           title: "Erro ao carregar dados",
@@ -82,24 +86,24 @@ export default function CaixaPage() {
         heading="Caixa"
         description="Gerencie as operações do caixa"
       >
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {dashboardData?.status === "closed" ? (
             <Link href="/dashboard/caixa/abrir">
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <ArrowUpCircle className="mr-2 h-4 w-4" />
                 Abrir Caixa
               </Button>
             </Link>
           ) : (
             <>
-              <Link href="/dashboard/caixa/venda">
-                <Button>
+              <Link href="/dashboard/caixa/venda" className="w-full sm:w-auto">
+                <Button className="w-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Nova Venda
                 </Button>
               </Link>
-              <Link href="/dashboard/caixa/fechar">
-                <Button variant="outline">
+              <Link href="/dashboard/caixa/fechar" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full">
                   <ArrowDownCircle className="mr-2 h-4 w-4" />
                   Fechar Caixa
                 </Button>
@@ -366,63 +370,109 @@ export default function CaixaPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dashboardData?.lastClosedRegister && (
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center">
-                        <Badge
-                          variant="outline"
-                          className="mr-2 bg-red-100 text-red-600 hover:bg-red-100"
+                {registerHistory.length === 0 ? (
+                  <p className="text-center text-muted-foreground">
+                    Nenhum histórico de caixa encontrado
+                  </p>
+                ) : (
+                  // Ordenar por data decrescente (mais recente primeiro)
+                  [...registerHistory]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.createdAt).getTime() -
+                        new Date(a.createdAt).getTime()
+                    )
+                    .map((register) => {
+                      const isOpen = register.status === "open";
+                      const isCurrentRegister =
+                        dashboardData?.currentRegister?.id === register._id;
+
+                      return (
+                        <div
+                          key={register._id}
+                          className="border rounded-lg p-4"
                         >
-                          Fechamento
-                        </Badge>
-                        <span className="text-sm font-medium">
-                          {new Date(
-                            dashboardData.lastClosedRegister.horaFechamento
-                          ).toLocaleString("pt-BR")}
-                        </span>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        <FileText className="h-4 w-4 mr-1" />
-                        Ver Relatório
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">
-                          Saldo Inicial:
-                        </span>
-                        <div>
-                          R${" "}
-                          {(
-                            dashboardData.lastClosedRegister.saldoInicial || 0
-                          ).toFixed(2)}
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center">
+                              <Badge
+                                variant="outline"
+                                className={`mr-2 ${
+                                  isOpen
+                                    ? "bg-green-100 text-green-600 hover:bg-green-100"
+                                    : "bg-red-100 text-red-600 hover:bg-red-100"
+                                }`}
+                              >
+                                {isOpen ? "Abertura" : "Fechamento"}
+                                {isCurrentRegister && " (Atual)"}
+                              </Badge>
+                              <span className="text-sm font-medium">
+                                {new Date(register.createdAt).toLocaleString(
+                                  "pt-BR"
+                                )}
+                                {register.closedAt &&
+                                  ` - ${new Date(
+                                    register.closedAt
+                                  ).toLocaleString("pt-BR")}`}
+                              </span>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Operador: {register.user?.name || "Desconhecido"}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">
+                                Saldo Inicial:
+                              </span>
+                              <div>
+                                R$ {(register.initialBalance || 0).toFixed(2)}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">
+                                {isOpen && isCurrentRegister
+                                  ? "Vendas até agora:"
+                                  : "Total de Vendas:"}
+                              </span>
+                              <div>
+                                R${" "}
+                                {isOpen && isCurrentRegister
+                                  ? (
+                                      dashboardData?.currentRegister
+                                        ?.totalVendas || 0
+                                    ).toFixed(2)
+                                  : (
+                                      (register.finalBalance || 0) -
+                                      (register.initialBalance || 0)
+                                    ).toFixed(2)}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">
+                                {isOpen && isCurrentRegister
+                                  ? "Saldo Atual:"
+                                  : "Saldo Final:"}
+                              </span>
+                              <div>
+                                R${" "}
+                                {isOpen && isCurrentRegister
+                                  ? (
+                                      dashboardData?.currentRegister
+                                        ?.saldoAtual || 0
+                                    ).toFixed(2)
+                                  : (register.finalBalance || 0).toFixed(2)}
+                              </div>
+                            </div>
+                            {!isOpen && register.closedBy && (
+                              <div className="col-span-3 mt-2 text-xs text-muted-foreground">
+                                Fechado por:{" "}
+                                {register.closedBy.name || "Desconhecido"}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">
-                          Total de Vendas:
-                        </span>
-                        <div>
-                          R${" "}
-                          {(
-                            dashboardData.lastClosedRegister.totalVendas || 0
-                          ).toFixed(2)}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">
-                          Saldo Final:
-                        </span>
-                        <div>
-                          R${" "}
-                          {(
-                            dashboardData.lastClosedRegister.saldoFinal || 0
-                          ).toFixed(2)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                      );
+                    })
                 )}
               </div>
             </CardContent>
