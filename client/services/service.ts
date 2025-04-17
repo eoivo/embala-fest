@@ -236,7 +236,7 @@ async function uploadAvatar(file: File) {
     const formData = new FormData();
     formData.append("avatar", file);
 
-    const response = await axios.post(`${API_URL}/users/avatar`, formData, {
+    const response = await axios.post(`${API_URL}/users/me/avatar`, formData, {
       headers: {
         ...getHeaders(),
         "Content-Type": "multipart/form-data",
