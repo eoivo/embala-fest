@@ -29,13 +29,23 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [retryMessage, setRetryMessage] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setRetryMessage(false);
+
+    // Iniciar um temporizador para mostrar a mensagem de "Servidor inicializando..."
+    const messageTimer = setTimeout(() => {
+      setRetryMessage(true);
+    }, 4000); // Mostrar mensagem após 4 segundos
 
     try {
       const response = await create("users/login", { email, password }, {});
+
+      // Se chegou aqui, login bem-sucedido - limpar o timer
+      clearTimeout(messageTimer);
 
       // Armazena o token no localStorage
       localStorage.setItem("token", response.token);
@@ -55,6 +65,9 @@ export default function LoginPage() {
       // Redireciona para o dashboard
       router.push("/dashboard");
     } catch (error) {
+      // Limpar o timer se houver erro
+      clearTimeout(messageTimer);
+
       toast({
         title: "Erro ao fazer login",
         description: "Email ou senha incorretos. Tente novamente.",
@@ -62,6 +75,7 @@ export default function LoginPage() {
       });
     } finally {
       setLoading(false);
+      setRetryMessage(false);
     }
   };
 
@@ -157,8 +171,18 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Entrando..." : "Entrar"}
+              {loading
+                ? retryMessage
+                  ? "Inicializando servidor..."
+                  : "Entrando..."
+                : "Entrar"}
             </Button>
+            {retryMessage && (
+              <p className="mt-2 text-xs text-amber-600">
+                O servidor está inicializando. Isso pode levar alguns
+                segundos...
+              </p>
+            )}
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Não tem uma conta?{" "}
               <Link href="/register" className="text-primary hover:underline">

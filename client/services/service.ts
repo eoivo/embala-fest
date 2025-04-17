@@ -82,32 +82,59 @@ async function getUserProfile(userId: string, headers: any = {}) {
 }
 
 async function create(resource: string, data: any, headers: any = {}) {
-  try {
-    console.log(`Enviando requisição para: ${API_URL}/${resource}`);
-    console.log("Dados:", data);
+  const MAX_RETRIES = 2;
+  let retries = 0;
 
-    // Não anexar token no login/registro
-    const useAuth = resource !== "users/login" && resource !== "users";
-    const reqHeaders = useAuth
-      ? getHeaders(headers)
-      : {
-          "Content-Type": "application/json",
-          ...headers,
-        };
+  async function attemptRequest() {
+    try {
+      console.log(
+        `Enviando requisição para: ${API_URL}/${resource}${
+          retries > 0 ? ` (tentativa ${retries + 1})` : ""
+        }`
+      );
+      console.log("Dados:", data);
 
-    console.log("Headers:", reqHeaders);
+      // Não anexar token no login/registro
+      const useAuth = resource !== "users/login" && resource !== "users";
+      const reqHeaders = useAuth
+        ? getHeaders(headers)
+        : {
+            "Content-Type": "application/json",
+            ...headers,
+          };
 
-    const response = await axios.post(`${API_URL}/${resource}`, data, {
-      headers: reqHeaders,
-      withCredentials: true,
-    });
+      console.log("Headers:", reqHeaders);
 
-    console.log("Resposta:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Erro na requisição:", error);
-    handleError(error);
+      const response = await axios.post(`${API_URL}/${resource}`, data, {
+        headers: reqHeaders,
+        withCredentials: true,
+      });
+
+      console.log("Resposta:", response.data);
+      return response.data;
+    } catch (error) {
+      // Verificar se é um erro que deve tentar novamente
+      // 502 Bad Gateway ou timeout são candidatos para retry
+      const axiosError = error as AxiosError;
+      const is502Error = axiosError.response?.status === 502;
+      const isTimeoutError =
+        axiosError.code === "ECONNABORTED" || !axiosError.response;
+
+      if ((is502Error || isTimeoutError) && retries < MAX_RETRIES) {
+        retries++;
+        console.log(`Tentando novamente (${retries}/${MAX_RETRIES})...`);
+        // Esperar um tempo antes de tentar novamente (500ms, 1s, etc.)
+        const delay = retries * 1000; // Aumentar o tempo a cada tentativa
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return attemptRequest();
+      }
+
+      console.error("Erro na requisição:", error);
+      handleError(error);
+    }
   }
+
+  return attemptRequest();
 }
 
 async function read(resource: string, headers: any = {}) {
