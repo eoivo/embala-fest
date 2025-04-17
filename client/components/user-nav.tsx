@@ -17,11 +17,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { read } from "@/services/service";
 import { useToast } from "@/hooks/use-toast";
+import { useUserContext } from "@/hooks/use-user-context";
 
 export function UserNav() {
   const [usuario, setUsuario] = useState({ nome: "", email: "", avatar: "" });
   const router = useRouter();
   const { toast } = useToast();
+  const { userAvatar } = useUserContext();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -39,6 +41,16 @@ export function UserNav() {
 
     fetchUserData();
   }, []);
+
+  // Atualizar o avatar quando userAvatar mudar no contexto
+  useEffect(() => {
+    if (userAvatar) {
+      setUsuario((prev) => ({
+        ...prev,
+        avatar: userAvatar,
+      }));
+    }
+  }, [userAvatar]);
 
   const handleLogout = () => {
     localStorage.removeItem("userId");

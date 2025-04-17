@@ -20,9 +20,11 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Camera, Key, Lock, Mail, Save } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { read, update, uploadAvatar } from "@/services/service";
+import { useUserContext } from "@/hooks/use-user-context";
 
 export default function PerfilPage() {
   const { toast } = useToast();
+  const { updateAvatar } = useUserContext();
   const [loading, setLoading] = useState(false);
   const [usuario, setUsuario] = useState({
     nome: "",
@@ -41,6 +43,7 @@ export default function PerfilPage() {
   });
   const [senhaError, setSenhaError] = useState("");
   const [canEdit, setCanEdit] = useState(false);
+  const [canEditAvatar, setCanEditAvatar] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -62,8 +65,11 @@ export default function PerfilPage() {
           avatar: profileData.avatar || "",
         });
 
-        // Verificar se o usuário pode editar (admin ou gerente)
+        // Verificar se o usuário pode editar perfil (admin ou gerente)
         setCanEdit(["admin", "manager"].includes(profileData.role));
+
+        // Todos os usuários podem editar o avatar, independentemente do cargo
+        setCanEditAvatar(true);
       } catch (error) {
         toast({
           title: "Erro ao carregar perfil",
@@ -176,7 +182,7 @@ export default function PerfilPage() {
   };
 
   const handleAvatarClick = () => {
-    if (canEdit && fileInputRef.current) {
+    if (canEditAvatar && fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
@@ -218,6 +224,9 @@ export default function PerfilPage() {
           ...usuario,
           avatar: result.avatar,
         });
+
+        // Atualizar o contexto global para que o header atualize
+        updateAvatar(result.avatar);
 
         toast({
           title: "Avatar atualizado",
@@ -270,7 +279,7 @@ export default function PerfilPage() {
                         .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  {canEdit && (
+                  {canEditAvatar && (
                     <>
                       <input
                         type="file"
