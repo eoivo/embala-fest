@@ -1,4 +1,4 @@
-import { logger } from "../config/logger";
+import { logger } from "../config/logger.js";
 import nodemailer from "nodemailer";
 import { sendEmail } from "../utils/sendEmail.js";
 

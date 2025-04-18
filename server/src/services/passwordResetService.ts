@@ -1,7 +1,7 @@
 import crypto from "crypto";
-import { User, IUser } from "../models/user";
-import emailService from "./emailService";
-import { logger } from "../config/logger";
+import { User, IUser } from "../models/user.js";
+import emailService from "./emailService.js";
+import { logger } from "../config/logger.js";
 
 /**
  * Serviço para gerenciar recuperação de senha

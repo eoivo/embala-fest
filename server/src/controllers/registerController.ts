@@ -127,9 +127,8 @@ export const getCurrentRegister = asyncHandler(
       .populate("sales");
 
     if (!register) {
-      return res
-        .status(404)
-        .json({ message: "Nenhum caixa aberto encontrado" });
+      res.status(404).json({ message: "Nenhum caixa aberto encontrado" });
+      return;
     }
 
     res.json(register);
