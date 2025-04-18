@@ -14,7 +14,6 @@ import {
   ShieldAlert,
   Building,
   Menu,
-  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +80,6 @@ export function MainNav() {
     },
   ];
 
-  // Renderização de navegação para desktop
   const DesktopNav = () => (
     <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
       {routes.map((route) => {
@@ -103,7 +101,6 @@ export function MainNav() {
     </nav>
   );
 
-  // Renderização de navegação para dispositivos móveis
   const MobileNav = () => (
     <div className="md:hidden">
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>

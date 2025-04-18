@@ -14,7 +14,7 @@ function getAuthToken(): string | null {
   return typeof window !== "undefined" ? localStorage.getItem("token") : null;
 }
 
-function getHeaders(headers: any = {}) {
+function getHeaders(headers: Record<string, string> = {}) {
   const token = getAuthToken();
   return {
     ...headers,
@@ -117,7 +117,7 @@ export const reportService = {
         withCredentials: true,
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao buscar relatório diário:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(
@@ -136,7 +136,7 @@ export const reportService = {
         withCredentials: true,
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao buscar relatório semanal:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(
@@ -166,7 +166,7 @@ export const reportService = {
         withCredentials: true,
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao buscar relatório mensal:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(
@@ -196,7 +196,7 @@ export const reportService = {
         withCredentials: true,
       });
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao buscar relatório de produtos:", error);
       if (axios.isAxiosError(error) && error.response) {
         throw new Error(
@@ -233,9 +233,12 @@ export const exportDailyReportToExcel = async (date?: string) => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório para Excel:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(`Erro ao exportar relatório: ${error.message}`);
+    }
+    throw new Error("Erro ao exportar relatório para Excel");
   }
 };
 
@@ -263,9 +266,12 @@ export const exportDailyReportToPDF = async (date?: string) => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório para PDF:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(`Erro ao exportar relatório: ${error.message}`);
+    }
+    throw new Error("Erro ao exportar relatório para PDF");
   }
 };
 
@@ -304,9 +310,12 @@ export const exportWeeklyReportToExcel = async (startDate?: string) => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório semanal para Excel:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(`Erro ao exportar relatório semanal: ${error.message}`);
+    }
+    throw new Error("Erro ao exportar relatório semanal para Excel");
   }
 };
 
@@ -344,9 +353,12 @@ export const exportWeeklyReportToPDF = async (startDate?: string) => {
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório semanal para PDF:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(`Erro ao exportar relatório semanal: ${error.message}`);
+    }
+    throw new Error("Erro ao exportar relatório semanal para PDF");
   }
 };
 
@@ -388,9 +400,12 @@ export const exportMonthlyReportToExcel = async (
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório mensal para Excel:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(`Erro ao exportar relatório mensal: ${error.message}`);
+    }
+    throw new Error("Erro ao exportar relatório mensal para Excel");
   }
 };
 
@@ -432,9 +447,12 @@ export const exportMonthlyReportToPDF = async (
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório mensal para PDF:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(`Erro ao exportar relatório mensal: ${error.message}`);
+    }
+    throw new Error("Erro ao exportar relatório mensal para PDF");
   }
 };
 
@@ -474,9 +492,14 @@ export const exportProductsReportToExcel = async (
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório de produtos para Excel:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(
+        `Erro ao exportar relatório de produtos: ${error.message}`
+      );
+    }
+    throw new Error("Erro ao exportar relatório de produtos para Excel");
   }
 };
 
@@ -515,8 +538,13 @@ export const exportProductsReportToPDF = async (
     document.body.appendChild(link);
     link.click();
     link.remove();
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Erro ao exportar relatório de produtos para PDF:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw new Error(
+        `Erro ao exportar relatório de produtos: ${error.message}`
+      );
+    }
+    throw new Error("Erro ao exportar relatório de produtos para PDF");
   }
 };

@@ -17,7 +17,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, Camera, Key, Lock, Mail, Save } from "lucide-react";
+import { AlertCircle, Camera, Mail } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { read, update, uploadAvatar } from "@/services/service";
 import { useUserContext } from "@/hooks/use-user-context";

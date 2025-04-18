@@ -9,6 +9,8 @@ export interface IUser extends mongoose.Document {
   password: string;
   role: "admin" | "manager" | "cashier";
   avatar: string; // URL da imagem do avatar
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   matchPassword: (enteredPassword: string) => Promise<boolean>;
 }
 
@@ -39,6 +41,14 @@ const userSchema = new mongoose.Schema<IUser>(
     avatar: {
       type: String,
       default: "",
+    },
+    resetPasswordToken: {
+      type: String,
+      default: undefined,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: undefined,
     },
   },
   {

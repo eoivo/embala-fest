@@ -5,13 +5,13 @@
 [[plugins]]
 package = "@netlify/plugin-nextjs"
 
-# Proxy para API com headers CORS e maior timeout
+
 [[redirects]]
   from = "/api/*"
   to = "https://embala-fest-api.onrender.com/api/:splat"
   status = 200
   force = true
-  # Aumentar o timeout para 20s para lidar com cold starts
+
   [redirects.headers]
     Access-Control-Allow-Origin = "https://embalafest.netlify.app"
     Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
@@ -19,7 +19,7 @@ package = "@netlify/plugin-nextjs"
     # Confirmar que não estamos cacheando as respostas
     Cache-Control = "no-cache"
 
-# Responder imediatamente a solicitações OPTIONS (preflight CORS)
+
 [[redirects]]
   from = "/api/*"
   to = "https://embala-fest-api.onrender.com/api/:splat"
@@ -39,13 +39,13 @@ package = "@netlify/plugin-nextjs"
   to = "/.netlify/functions/next"
   status = 200
 
-# Aumentar os timeouts do proxy do Netlify
+
 [build.processing.js]
   bundle = true
   minify = true
 
 [functions]
-  # Aumentar o tempo limite de execução das funções do Netlify
+
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/functions"]
   included_files = ["!node_modules/.pnpm/**"]

@@ -66,9 +66,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { create, read, update, remove } from "@/services/service"; // Importe as funções do seu serviço
+import { create, read, update, remove } from "@/services/service";
 
-// Tipos
 type UserRole = "admin" | "manager" | "cashier";
 
 interface UserType {
@@ -92,7 +91,6 @@ export default function AdminUsuariosPage() {
   const [sortBy, setSortBy] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  // Estados para o formulário de criação/edição
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<UserType | null>(
     null
   );
@@ -106,11 +104,9 @@ export default function AdminUsuariosPage() {
   const [formResetSenha, setFormResetSenha] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Carregar usuários e verificar permissão de admin
   useEffect(() => {
     const checkAdminPermission = async () => {
       try {
-        // Verificar permissões do usuário
         const user = await read("users/me");
 
         if (user.role !== "admin") {
@@ -119,7 +115,6 @@ export default function AdminUsuariosPage() {
           return;
         }
 
-        // Se for admin, definir estados e buscar lista de usuários
         setCurrentUser(user);
         setIsAdmin(true);
         setLoading(true);
@@ -136,7 +131,6 @@ export default function AdminUsuariosPage() {
     checkAdminPermission();
   }, [router, toast]);
 
-  // Função para ordenar usuários
   const sortUsuarios = (usuarios: UserType[]) => {
     return [...usuarios].sort((a, b) => {
       let comparison = 0;
@@ -156,7 +150,6 @@ export default function AdminUsuariosPage() {
     });
   };
 
-  // Filtrar usuários com base na busca
   const usuariosFiltrados = sortUsuarios(
     usuarios.filter(
       (usuario) =>
@@ -166,7 +159,6 @@ export default function AdminUsuariosPage() {
     )
   );
 
-  // Função para alternar a direção da ordenação
   const toggleSort = (field: string) => {
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -176,7 +168,6 @@ export default function AdminUsuariosPage() {
     }
   };
 
-  // Função para abrir o modal de criação de usuário
   const handleNovoUsuario = () => {
     setIsNovoUsuario(true);
     setUsuarioSelecionado(null);
@@ -190,7 +181,6 @@ export default function AdminUsuariosPage() {
     setIsDialogOpen(true);
   };
 
-  // Função para abrir o modal de edição de usuário
   const handleEditarUsuario = (usuario: UserType) => {
     setIsNovoUsuario(false);
     setUsuarioSelecionado(usuario);
@@ -204,9 +194,7 @@ export default function AdminUsuariosPage() {
     setIsDialogOpen(true);
   };
 
-  // Função para salvar um novo usuário ou atualizar um existente
   const handleSalvarUsuario = async () => {
-    // Validações básicas (mantenha as validações existentes)
     if (!formNome || !formEmail) {
       toast({
         title: "Erro de validação",
@@ -220,7 +208,6 @@ export default function AdminUsuariosPage() {
       setLoading(true);
 
       if (isNovoUsuario) {
-        // Criar novo usuário
         const novoUsuario = await create("users", {
           name: formNome,
           email: formEmail,
@@ -235,7 +222,6 @@ export default function AdminUsuariosPage() {
           description: `O usuário ${formNome} foi criado com sucesso.`,
         });
       } else if (usuarioSelecionado) {
-        // Atualizar usuário existente
         const usuarioAtualizado = await update(
           "users",
           usuarioSelecionado._id,
@@ -270,9 +256,7 @@ export default function AdminUsuariosPage() {
     }
   };
 
-  // Função para excluir um usuário
   const handleExcluirUsuario = async (id: string) => {
-    // Não permitir excluir o próprio usuário
     if (id === currentUser?._id) {
       toast({
         title: "Operação não permitida",
@@ -305,7 +289,6 @@ export default function AdminUsuariosPage() {
     }
   };
 
-  // Função para obter o ícone do cargo
   const getCargoIcon = (cargo: UserRole) => {
     switch (cargo) {
       case "admin":
@@ -319,7 +302,6 @@ export default function AdminUsuariosPage() {
     }
   };
 
-  // Função para obter o texto do cargo
   const getCargoText = (cargo: UserRole) => {
     switch (cargo) {
       case "admin":
@@ -333,7 +315,6 @@ export default function AdminUsuariosPage() {
     }
   };
 
-  // Função para obter as iniciais do nome
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -343,7 +324,6 @@ export default function AdminUsuariosPage() {
       .substring(0, 2);
   };
 
-  // Se não for admin, mostrar mensagem de acesso negado
   if (!isAdmin) {
     return (
       <DashboardShell>
@@ -541,7 +521,6 @@ export default function AdminUsuariosPage() {
         </div>
       )}
 
-      {/* Opções de ordenação para mobile */}
       <div className="md:hidden mb-4">
         <Select
           value={`${sortBy}-${sortDirection}`}
@@ -567,7 +546,6 @@ export default function AdminUsuariosPage() {
         </Select>
       </div>
 
-      {/* Versão para desktop - visível apenas em telas md e maiores */}
       <div className="hidden md:block">
         <Card>
           <div className="rounded-md border">
@@ -694,8 +672,9 @@ export default function AdminUsuariosPage() {
                                   Excluir Usuário
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o usuário "
-                                  {usuario.name}"? Esta ação não pode ser
+                                  Tem certeza que deseja excluir o usuário
+                                  &quot;
+                                  {usuario.name}&quot;? Esta ação não pode ser
                                   desfeita.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
@@ -724,7 +703,6 @@ export default function AdminUsuariosPage() {
         </Card>
       </div>
 
-      {/* Versão para dispositivos móveis (cards) - visível apenas em telas menores que md */}
       <div className="md:hidden space-y-4">
         {loading ? (
           <Card>
@@ -808,8 +786,9 @@ export default function AdminUsuariosPage() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Tem certeza que deseja excluir o usuário "{usuario.name}
-                        "? Esta ação não pode ser desfeita.
+                        Tem certeza que deseja excluir o usuário &quot;
+                        {usuario.name}
+                        &quot;? Esta ação não pode ser desfeita.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

@@ -36,6 +36,12 @@ import {
   updateStoreSettings,
 } from "@/services/service";
 
+interface ServiceError {
+  message?: string;
+  status?: number;
+  [key: string]: unknown;
+}
+
 export default function ConfiguracoesPage() {
   const { toast } = useToast();
   const [storeLoading, setStoreLoading] = useState(false);
@@ -44,7 +50,6 @@ export default function ConfiguracoesPage() {
   const [autoCloseMinute, setAutoCloseMinute] = useState("0");
   const [autoCloseDescription, setAutoCloseDescription] = useState("");
 
-  // Estado para configurações da loja
   const [storeSettings, setStoreSettings] = useState({
     storeName: "",
     cnpj: "",
@@ -60,14 +65,11 @@ export default function ConfiguracoesPage() {
     },
   });
 
-  // Buscar configurações de fechamento automático
   useEffect(() => {
     const fetchAutoCloseSettings = async () => {
       try {
         const settings = await getAutoCloseSettings();
         if (settings) {
-          // Extrair hora e minuto da descrição ou do agendamento
-          // O formato do agendamento é "minutes hours * * *"
           const parts = settings.schedule.split(" ");
           setAutoCloseMinute(parts[0]);
           setAutoCloseHour(parts[1]);
@@ -141,11 +143,12 @@ export default function ConfiguracoesPage() {
             "As configurações da loja foram atualizadas com sucesso.",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const serviceError = error as ServiceError;
       toast({
         title: "Erro ao salvar",
         description:
-          error.message ||
+          serviceError.message ||
           "Não foi possível atualizar as configurações da loja.",
         variant: "destructive",
       });
@@ -173,11 +176,12 @@ export default function ConfiguracoesPage() {
             "Horário de fechamento automático atualizado com sucesso.",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const serviceError = error as ServiceError;
       toast({
         title: "Erro ao salvar",
         description:
-          error.message ||
+          serviceError.message ||
           "Não foi possível atualizar o horário de fechamento.",
         variant: "destructive",
       });
@@ -186,9 +190,7 @@ export default function ConfiguracoesPage() {
     }
   };
 
-  // Gerar as horas para o select
   const hoursOptions = Array.from({ length: 24 }, (_, i) => i);
-  // Gerar as opções de minutos (0, 15, 30, 45)
   const minutesOptions = [0, 15, 30, 45];
 
   return (

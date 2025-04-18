@@ -26,20 +26,16 @@ export default function AbrirCaixaPage() {
   const { toast } = useToast();
   const [saldoInicial, setSaldoInicial] = useState("");
   const [loading, setLoading] = useState(false);
-  const [operador, setOperador] = useState("Operador de Caixa");
+  const operador = "Operador de Caixa";
   const [hasOpenRegister, setHasOpenRegister] = useState(false);
 
-  // Verificar se já existe um caixa aberto ao carregar a página
   useEffect(() => {
     const checkCurrentRegister = async () => {
       try {
         setLoading(true);
 
-        // Em vez de verificar o caixa diretamente (que causaria 404),
-        // vamos verificar o dashboard que retorna status: "open" ou "closed"
         const dashboard = await registerService.getDashboard();
 
-        // Se o dashboard indica que tem caixa aberto
         if (
           dashboard &&
           dashboard.status === "open" &&
@@ -54,7 +50,6 @@ export default function AbrirCaixaPage() {
           router.push("/dashboard/caixa/venda");
         }
       } catch (error) {
-        // Erro ao verificar dashboard
         console.error("Erro ao verificar status do caixa:", error);
       } finally {
         setLoading(false);
@@ -69,28 +64,31 @@ export default function AbrirCaixaPage() {
     setLoading(true);
 
     try {
-      // Converte o saldo para número
       const initialBalance = parseFloat(saldoInicial);
 
       if (isNaN(initialBalance)) {
         throw new Error("Valor inválido para saldo inicial");
       }
 
-      // Chamar o endpoint para abrir o caixa
-      const response = await registerService.openRegister(initialBalance);
+      // Removendo a variável response que não é utilizada
+      await registerService.openRegister(initialBalance);
 
       toast({
         title: "Caixa aberto com sucesso!",
         description: `Saldo inicial: R$ ${saldoInicial}`,
       });
 
-      // Redirecionar para página de vendas
       router.push("/dashboard/caixa/venda");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      // Tratamos o erro como um objeto com possível propriedade message
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro ao tentar abrir o caixa.";
+
       toast({
         title: "Erro ao abrir caixa",
-        description:
-          error.message || "Ocorreu um erro ao tentar abrir o caixa.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -98,7 +96,6 @@ export default function AbrirCaixaPage() {
     }
   };
 
-  // Se já tem caixa aberto, não renderiza o conteúdo
   if (hasOpenRegister) return null;
 
   return (

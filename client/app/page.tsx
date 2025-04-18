@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { ArrowRight, Package, ShoppingBag, Menu, X, User } from "lucide-react";
 import { useState } from "react";
 
@@ -17,9 +18,11 @@ export default function LandingPage() {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <img
+            <Image
               src="/logos/logo-icon.png"
               alt="EmbalaFest Logo"
+              width={40}
+              height={40}
               className="h-10 w-10"
             />
             <span className="ml-2 font-bold text-xl text-primary">
@@ -124,9 +127,11 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
-              <img
+              <Image
                 src="/logos/logo-icon.png"
                 alt="EmbalaFest Logo"
+                width={32}
+                height={32}
                 className="h-8 w-8"
               />
               <span className="ml-2 font-bold text-lg text-primary">

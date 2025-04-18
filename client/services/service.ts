@@ -10,10 +10,8 @@ if (process.env.NODE_ENV === "production") {
   API_URL = "http://localhost:3000/api";
 }
 
-// Configurar interceptores para debug
 axios.interceptors.request.use(
   (config) => {
-    // Não precisamos logar todas as requisições
     if (process.env.NODE_ENV !== "production") {
       console.log("Request:", {
         url: config.url,
@@ -30,7 +28,6 @@ axios.interceptors.request.use(
 
 axios.interceptors.response.use(
   (response) => {
-    // Reduzir logging apenas para produção
     if (process.env.NODE_ENV !== "production") {
       console.log("Response:", {
         status: response.status,
@@ -40,7 +37,6 @@ axios.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Não logar erros 404 para register/current
     if (
       error.config &&
       error.config.url &&
@@ -48,7 +44,6 @@ axios.interceptors.response.use(
       error.response &&
       error.response.status === 404
     ) {
-      // Silenciar este erro específico, mas ainda rejeitá-lo para tratamento
       return Promise.reject(error);
     }
 
@@ -61,7 +56,7 @@ function getAuthToken(): string | null {
   return typeof window !== "undefined" ? localStorage.getItem("token") : null;
 }
 
-function getHeaders(headers: any = {}) {
+function getHeaders(headers: Record<string, string> = {}) {
   const token = getAuthToken();
   return {
     ...headers,
@@ -69,19 +64,26 @@ function getHeaders(headers: any = {}) {
   };
 }
 
-async function getUserProfile(userId: string, headers: any = {}) {
+async function getUserProfile(
+  userId: string,
+  headers: Record<string, string> = {}
+) {
   try {
     const response = await axios.get(`${API_URL}/users/${userId}`, {
       headers: getHeaders(headers),
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
   }
 }
 
-async function create(resource: string, data: any, headers: any = {}) {
+async function create(
+  resource: string,
+  data: Record<string, unknown>,
+  headers: Record<string, string> = {}
+) {
   const MAX_RETRIES = 2;
   let retries = 0;
 
@@ -94,7 +96,6 @@ async function create(resource: string, data: any, headers: any = {}) {
       );
       console.log("Dados:", data);
 
-      // Não anexar token no login/registro
       const useAuth = resource !== "users/login" && resource !== "users";
       const reqHeaders = useAuth
         ? getHeaders(headers)
@@ -112,9 +113,7 @@ async function create(resource: string, data: any, headers: any = {}) {
 
       console.log("Resposta:", response.data);
       return response.data;
-    } catch (error) {
-      // Verificar se é um erro que deve tentar novamente
-      // 502 Bad Gateway ou timeout são candidatos para retry
+    } catch (error: unknown) {
       const axiosError = error as AxiosError;
       const is502Error = axiosError.response?.status === 502;
       const isTimeoutError =
@@ -123,8 +122,8 @@ async function create(resource: string, data: any, headers: any = {}) {
       if ((is502Error || isTimeoutError) && retries < MAX_RETRIES) {
         retries++;
         console.log(`Tentando novamente (${retries}/${MAX_RETRIES})...`);
-        // Esperar um tempo antes de tentar novamente (500ms, 1s, etc.)
-        const delay = retries * 1000; // Aumentar o tempo a cada tentativa
+
+        const delay = retries * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
         return attemptRequest();
       }
@@ -137,14 +136,14 @@ async function create(resource: string, data: any, headers: any = {}) {
   return attemptRequest();
 }
 
-async function read(resource: string, headers: any = {}) {
+async function read(resource: string, headers: Record<string, string> = {}) {
   try {
     const response = await axios.get(`${API_URL}/${resource}`, {
       headers: getHeaders(headers),
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
   }
 }
@@ -152,8 +151,8 @@ async function read(resource: string, headers: any = {}) {
 async function update(
   resource: string,
   id: string,
-  data: any,
-  headers: any = {}
+  data: Record<string, unknown>,
+  headers: Record<string, string> = {}
 ) {
   try {
     const response = await axios.put(`${API_URL}/${resource}/${id}`, data, {
@@ -161,24 +160,31 @@ async function update(
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
   }
 }
 
-async function remove(resource: string, id: string, headers: any = {}) {
+async function remove(
+  resource: string,
+  id: string,
+  headers: Record<string, string> = {}
+) {
   try {
     const response = await axios.delete(`${API_URL}/${resource}/${id}`, {
       headers: getHeaders(headers),
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
   }
 }
 
-async function cancelSale(saleId: string, headers: any = {}) {
+async function cancelSale(
+  saleId: string,
+  headers: Record<string, string> = {}
+) {
   try {
     const response = await axios.put(
       `${API_URL}/sales/${saleId}/cancel`,
@@ -189,7 +195,7 @@ async function cancelSale(saleId: string, headers: any = {}) {
       }
     );
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
   }
 }
@@ -226,7 +232,7 @@ async function cancelSaleWithManager(
     );
 
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
   }
 }
@@ -244,7 +250,7 @@ async function uploadAvatar(file: File) {
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
   }
 }
@@ -256,7 +262,7 @@ async function getAutoCloseSettings() {
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
     return null;
   }
@@ -276,7 +282,7 @@ async function updateAutoCloseSettings(settings: {
       }
     );
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
     return null;
   }
@@ -289,7 +295,7 @@ async function getStoreSettings() {
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
     return null;
   }
@@ -315,7 +321,7 @@ async function updateStoreSettings(settings: {
       withCredentials: true,
     });
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
     return null;
   }
@@ -331,7 +337,7 @@ async function getAvailablePaymentMethods() {
       }
     );
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     handleError(error);
     return {
       cash: true,
@@ -342,22 +348,63 @@ async function getAvailablePaymentMethods() {
   }
 }
 
-function handleError(error: any) {
+function handleError(error: unknown) {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError;
-    if (
-      axiosError.response &&
-      axiosError.response.data &&
-      typeof axiosError.response.data === "object" &&
-      "message" in axiosError.response.data
-    ) {
-      const responseData = axiosError.response.data as { message: string };
-      throw new Error(responseData.message);
+
+    if (axiosError.response) {
+      const status = axiosError.response.status;
+
+      if (status === 401) {
+        console.error("Sessão expirada ou não autorizada");
+
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("token");
+
+          if (!window.location.pathname.includes("/login")) {
+            window.location.href = "/login";
+          }
+        }
+
+        throw new Error("Sessão expirada ou não autorizada");
+      } else if (status === 403) {
+        console.error("Acesso proibido");
+        throw new Error("Você não tem permissão para realizar esta ação");
+      } else if (status === 404) {
+        console.error("Recurso não encontrado");
+        throw new Error("O recurso solicitado não foi encontrado");
+      } else if (status >= 500) {
+        console.error("Erro no servidor");
+        throw new Error(
+          "Ocorreu um erro no servidor. Tente novamente mais tarde."
+        );
+      } else {
+        const responseData = axiosError.response.data as {
+          error?: string;
+          message?: string;
+        };
+        const errorMessage =
+          responseData.error ||
+          responseData.message ||
+          "Ocorreu um erro inesperado";
+        console.error(`Erro ${status}:`, errorMessage);
+        throw new Error(errorMessage);
+      }
+    } else if (axiosError.request) {
+      console.error("Sem resposta do servidor:", axiosError.request);
+      throw new Error(
+        "Não foi possível conectar ao servidor. Verifique sua conexão de internet."
+      );
     } else {
-      throw new Error("Something went wrong");
+      console.error("Erro ao configurar requisição:", axiosError.message);
+      throw new Error("Erro ao enviar requisição: " + axiosError.message);
     }
+  } else if (error instanceof Error) {
+    console.error("Erro:", error.message);
+    throw error;
   } else {
-    throw new Error("Unknown error");
+    console.error("Erro desconhecido:", error);
+    throw new Error("Ocorreu um erro inesperado");
   }
 }
 

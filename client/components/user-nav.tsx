@@ -42,7 +42,6 @@ export function UserNav() {
     fetchUserData();
   }, []);
 
-  // Atualizar o avatar quando userAvatar mudar no contexto
   useEffect(() => {
     if (userAvatar) {
       setUsuario((prev) => ({
@@ -61,7 +60,6 @@ export function UserNav() {
     router.push("/");
   };
 
-  // Função para obter as iniciais do nome e sobrenome
   const getInitials = (nome: string) => {
     if (!nome) return "";
     const [firstName, lastName] = nome.split(" ");

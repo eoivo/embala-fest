@@ -24,16 +24,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Overview } from "@/components/dashboard/overview";
 import {
   BarChart3,
-  Download,
   FileSpreadsheet,
   FileText,
   Loader2,
-  Calendar,
   CreditCard,
   DollarSign,
   PiggyBank,
   Wallet,
-  ArrowUpDown,
 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
@@ -62,23 +59,19 @@ export default function RelatoriosPage() {
   );
   const [activeTab, setActiveTab] = useState("diario");
 
-  // Função para converter nome do mês em número
   const getMonthNumber = (monthName: string): number => {
     try {
-      // Verificar se já está no formato "mes/ano"
       if (monthName.includes("/")) {
-        // Extrair apenas o nome do mês
         monthName = monthName.split("/")[0].trim();
       }
 
-      // Remover possíveis números ou caracteres especiais
       const cleanName = monthName.replace(/[0-9]/g, "").trim();
 
       const months: { [key: string]: number } = {
         janeiro: 0,
         fevereiro: 1,
         março: 2,
-        marco: 2, // Alternativa sem acento
+        marco: 2,
         abril: 3,
         maio: 4,
         junho: 5,
@@ -102,7 +95,6 @@ export default function RelatoriosPage() {
           : new Date().getMonth()
       );
 
-      // Se não encontrar o mês, retorna o mês atual (valor padrão)
       return months[monthLower] !== undefined
         ? months[monthLower]
         : new Date().getMonth();
@@ -112,7 +104,6 @@ export default function RelatoriosPage() {
     }
   };
 
-  // Estados para os relatórios
   const [loading, setLoading] = useState(true);
   const [dailyReport, setDailyReport] = useState<DailyReportData | null>(null);
   const [weeklyReport, setWeeklyReport] = useState<WeeklyReportData | null>(
@@ -124,13 +115,12 @@ export default function RelatoriosPage() {
   const [productsReport, setProductsReport] =
     useState<ProductsReportData | null>(null);
 
-  // Efeito para carregar os dados da aba atual
   useEffect(() => {
     const fetchReportData = async () => {
       setLoading(true);
       try {
         switch (activeTab) {
-          case "diario":
+          case "diario": {
             if (selectedDate) {
               const dailyData = await reportService.getDailyReport(
                 selectedDate.toISOString()
@@ -138,34 +128,32 @@ export default function RelatoriosPage() {
               setDailyReport(dailyData);
             }
             break;
-          case "semanal":
+          }
+          case "semanal": {
             const weeklyData = await reportService.getWeeklyReport();
             setWeeklyReport(weeklyData);
             break;
-          case "mensal":
+          }
+          case "mensal": {
             const monthlyData = await reportService.getMonthlyReport();
 
-            // Ordenar o histórico de meses pelo ano e mês cronologicamente
             if (
               monthlyData &&
               monthlyData.historicoMeses &&
               monthlyData.historicoMeses.length > 0
             ) {
               monthlyData.historicoMeses.sort((a, b) => {
-                // Função para obter o valor numérico do mês e o ano de um período
                 const getMonthYearValue = (periodo: string) => {
                   let month = 0;
                   let year = 0;
 
                   if (periodo.includes("/")) {
                     const parts = periodo.split("/");
-                    // Verifica se o formato é "Mês/Ano" (ex: "Março/2025")
                     if (isNaN(parseInt(parts[0]))) {
                       month = getMonthNumber(parts[0]);
                       year = parseInt(parts[1]);
                     } else {
-                      // Se for no formato "MM/AAAA" (ex: "03/2025")
-                      month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
+                      month = parseInt(parts[0]) - 1;
                       year = parseInt(parts[1]);
                     }
                   }
@@ -176,29 +164,30 @@ export default function RelatoriosPage() {
                 const valueA = getMonthYearValue(a.periodo);
                 const valueB = getMonthYearValue(b.periodo);
 
-                // Ordenar primeiro por ano (decrescente)
                 if (valueA.year !== valueB.year) {
-                  return valueB.year - valueA.year; // Anos mais recentes primeiro
+                  return valueB.year - valueA.year;
                 }
 
-                // Se o ano for o mesmo, ordenar por mês (decrescente)
-                return valueB.month - valueA.month; // Meses mais recentes primeiro
+                return valueB.month - valueA.month;
               });
             }
 
             setMonthlyReport(monthlyData);
             break;
-          case "produtos":
+          }
+          case "produtos": {
             const productsData = await reportService.getProductsReport();
             setProductsReport(productsData);
             break;
+          }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: "Erro ao carregar relatório",
           description:
-            error.message ||
-            "Ocorreu um erro ao carregar os dados do relatório",
+            error instanceof Error
+              ? error.message
+              : "Ocorreu um erro ao carregar os dados do relatório",
           variant: "destructive",
         });
       } finally {
@@ -209,12 +198,10 @@ export default function RelatoriosPage() {
     fetchReportData();
   }, [activeTab, selectedDate, toast]);
 
-  // Manipulador para troca de abas
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
 
-  // Função para formatar valor como moeda
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -222,17 +209,14 @@ export default function RelatoriosPage() {
     }).format(value);
   };
 
-  // Função para formatar percentual
   const formatPercent = (value: number): string => {
     return `${value.toFixed(1)}%`;
   };
 
-  // Função para formatar data
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
-  // Dentro do componente RelatoriosPage, adicione as funções de exportação
   const handleExportExcel = async () => {
     try {
       await exportDailyReportToExcel(selectedDate?.toISOString());
@@ -240,10 +224,13 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório exportado para Excel com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
-        description: error.message || "Erro ao exportar relatório para Excel",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório para Excel",
         variant: "destructive",
       });
     }
@@ -256,16 +243,18 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório exportado para PDF com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
-        description: error.message || "Erro ao exportar relatório para PDF",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório para PDF",
         variant: "destructive",
       });
     }
   };
 
-  // Adicionar as funções de exportação para relatórios semanais e mensais
   const handleExportWeeklyExcel = async (startDate: string) => {
     try {
       await exportWeeklyReportToExcel(startDate);
@@ -273,11 +262,13 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório semanal exportado para Excel com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
         description:
-          error.message || "Erro ao exportar relatório semanal para Excel",
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório semanal para Excel",
         variant: "destructive",
       });
     }
@@ -290,11 +281,13 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório semanal exportado para PDF com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
         description:
-          error.message || "Erro ao exportar relatório semanal para PDF",
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório semanal para PDF",
         variant: "destructive",
       });
     }
@@ -307,11 +300,13 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório mensal exportado para Excel com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
         description:
-          error.message || "Erro ao exportar relatório mensal para Excel",
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório mensal para Excel",
         variant: "destructive",
       });
     }
@@ -325,17 +320,18 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório mensal exportado para PDF com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
         description:
-          error.message || "Erro ao exportar relatório mensal para PDF",
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório mensal para PDF",
         variant: "destructive",
       });
     }
   };
 
-  // No componente RelatoriosPage, adicione as funções de exportação de produtos
   const handleExportProductsExcel = async () => {
     try {
       await exportProductsReportToExcel();
@@ -343,11 +339,13 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório de produtos exportado para Excel com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
         description:
-          error.message || "Erro ao exportar relatório de produtos para Excel",
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório de produtos para Excel",
         variant: "destructive",
       });
     }
@@ -360,11 +358,13 @@ export default function RelatoriosPage() {
         title: "Sucesso",
         description: "Relatório de produtos exportado para PDF com sucesso",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Erro ao exportar",
         description:
-          error.message || "Erro ao exportar relatório de produtos para PDF",
+          error instanceof Error
+            ? error.message
+            : "Erro ao exportar relatório de produtos para PDF",
         variant: "destructive",
       });
     }
@@ -592,7 +592,6 @@ export default function RelatoriosPage() {
                           </Table>
                         </div>
 
-                        {/* Versão mobile */}
                         <div className="md:hidden space-y-3 p-4">
                           <div className="flex items-center justify-between border-b pb-2">
                             <div className="flex items-center">
@@ -809,7 +808,6 @@ export default function RelatoriosPage() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
-                        {/* Versão para desktop - visível apenas em telas md e maiores */}
                         <div className="hidden md:block">
                           <Table>
                             <TableHeader>
@@ -926,9 +924,7 @@ export default function RelatoriosPage() {
                           </Table>
                         </div>
 
-                        {/* Versão mobile - Cards para telas menores */}
                         <div className="md:hidden space-y-4">
-                          {/* Card para semana atual */}
                           <Card className="bg-muted/50 overflow-hidden">
                             <CardHeader className="pb-2">
                               <CardTitle className="text-base">
@@ -1002,7 +998,6 @@ export default function RelatoriosPage() {
                             </CardFooter>
                           </Card>
 
-                          {/* Cards para histórico de semanas */}
                           {weeklyReport.historicoSemanas.map(
                             (semana, index) => (
                               <Card key={index} className="overflow-hidden">
@@ -1137,7 +1132,6 @@ export default function RelatoriosPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* Versão para desktop - visível apenas em telas md e maiores */}
                     <div className="hidden md:block">
                       <Table>
                         <TableHeader>
@@ -1218,17 +1212,14 @@ export default function RelatoriosPage() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => {
-                                      // Verificar formato do período
                                       let month, year;
                                       if (mes.periodo.includes("/")) {
                                         const parts = mes.periodo.split("/");
-                                        // Se for no formato "Mês/Ano" (ex: "Março/2025")
                                         if (isNaN(parseInt(parts[0]))) {
                                           month = getMonthNumber(parts[0]);
                                           year = parseInt(parts[1]);
                                         } else {
-                                          // Se for no formato "MM/AAAA" (ex: "03/2025")
-                                          month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
+                                          month = parseInt(parts[0]) - 1;
                                           year = parseInt(parts[1]);
                                         }
                                       } else {
@@ -1249,17 +1240,14 @@ export default function RelatoriosPage() {
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => {
-                                      // Verificar formato do período
                                       let month, year;
                                       if (mes.periodo.includes("/")) {
                                         const parts = mes.periodo.split("/");
-                                        // Se for no formato "Mês/Ano" (ex: "Março/2025")
                                         if (isNaN(parseInt(parts[0]))) {
                                           month = getMonthNumber(parts[0]);
                                           year = parseInt(parts[1]);
                                         } else {
-                                          // Se for no formato "MM/AAAA" (ex: "03/2025")
-                                          month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
+                                          month = parseInt(parts[0]) - 1;
                                           year = parseInt(parts[1]);
                                         }
                                       } else {
@@ -1284,9 +1272,7 @@ export default function RelatoriosPage() {
                       </Table>
                     </div>
 
-                    {/* Versão mobile - Cards para telas menores */}
                     <div className="md:hidden space-y-4">
-                      {/* Card para mês atual */}
                       <Card className="bg-muted/50 overflow-hidden">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-base">Mês Atual</CardTitle>
@@ -1358,19 +1344,15 @@ export default function RelatoriosPage() {
                         </CardFooter>
                       </Card>
 
-                      {/* Cards para histórico de meses */}
                       {monthlyReport.historicoMeses.map((mes, index) => {
-                        // Verificar formato do período
                         let month, year;
                         if (mes.periodo.includes("/")) {
                           const parts = mes.periodo.split("/");
-                          // Se for no formato "Mês/Ano" (ex: "Março/2025")
                           if (isNaN(parseInt(parts[0]))) {
                             month = getMonthNumber(parts[0]);
                             year = parseInt(parts[1]);
                           } else {
-                            // Se for no formato "MM/AAAA" (ex: "03/2025")
-                            month = parseInt(parts[0]) - 1; // Ajustar para índice 0-11
+                            month = parseInt(parts[0]) - 1;
                             year = parseInt(parts[1]);
                           }
                         } else {
@@ -1499,7 +1481,6 @@ export default function RelatoriosPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* Versão para desktop - visível apenas em telas md e maiores */}
                     <div className="hidden md:block">
                       <Table>
                         <TableHeader>
@@ -1549,7 +1530,6 @@ export default function RelatoriosPage() {
                       </Table>
                     </div>
 
-                    {/* Versão mobile - Cards para telas menores */}
                     <div className="md:hidden space-y-4">
                       {productsReport.produtos.length === 0 ? (
                         <Card>

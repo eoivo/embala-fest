@@ -18,10 +18,29 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { registerService } from "@/app/dashboard/caixa/registerService";
-import { ManagerAuthModal } from "@/app/dashboard/caixa/ManagerAuthModal"; // Importe o componente modal
+import { ManagerAuthModal } from "@/app/dashboard/caixa/ManagerAuthModal";
+
+// Definindo interfaces para fortes tipagens
+interface Sale {
+  total: number;
+  paymentMethod: "cash" | "credit" | "debit" | "pix";
+}
+
+interface Register {
+  _id: string;
+  status: string;
+  initialBalance: number;
+  finalBalance?: number;
+  sales: Sale[];
+  createdAt: string;
+  closedAt?: string;
+  user?: {
+    name: string;
+  };
+}
 
 export default function FecharCaixaPage() {
   const router = useRouter();
@@ -32,18 +51,15 @@ export default function FecharCaixaPage() {
   const [credit, setCredit] = useState("0.00");
   const [debit, setDebit] = useState("0.00");
   const [pix, setPix] = useState("0.00");
-  // Estado para controlar o modal de autenticação
   const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // Dados do caixa atual que virão do backend
-  const [currentRegister, setCurrentRegister] = useState<any>(null);
+  const [currentRegister, setCurrentRegister] = useState<Register | null>(null);
   const [saldoInicial, setSaldoInicial] = useState(0);
   const [totalVendas, setTotalVendas] = useState(0);
-  const [totalCancelamentos, setTotalCancelamentos] = useState(0);
+  // Adicionando prefixo _ para indicar que variáveis não usadas são intencionais
+  const [_totalCancelamentos, _setTotalCancelamentos] = useState(0);
   const [qtdeVendas, setQtdeVendas] = useState(0);
   const [horaAbertura, setHoraAbertura] = useState("");
 
-  // Buscar informações do caixa atual
   useEffect(() => {
     const fetchCurrentRegister = async () => {
       try {
@@ -63,12 +79,11 @@ export default function FecharCaixaPage() {
         setCurrentRegister(register);
         setSaldoInicial(register.initialBalance);
 
-        // Calcular total de vendas a partir dos registros
         let total = 0;
         let count = 0;
 
         if (register.sales && register.sales.length > 0) {
-          register.sales.forEach((sale: any) => {
+          register.sales.forEach((sale: Sale) => {
             total += sale.total;
             count++;
           });
@@ -77,18 +92,16 @@ export default function FecharCaixaPage() {
         setTotalVendas(total);
         setQtdeVendas(count);
 
-        // Definir hora de abertura
         const openDate = new Date(register.createdAt);
         setHoraAbertura(openDate.toLocaleTimeString("pt-BR"));
 
-        // Pré-preencher os campos com valores do sistema
         let cashTotal = 0;
         let creditTotal = 0;
         let debitTotal = 0;
         let pixTotal = 0;
 
         if (register.sales && register.sales.length > 0) {
-          register.sales.forEach((sale: any) => {
+          register.sales.forEach((sale: Sale) => {
             if (sale.paymentMethod === "cash") cashTotal += sale.total;
             else if (sale.paymentMethod === "credit") creditTotal += sale.total;
             else if (sale.paymentMethod === "debit") debitTotal += sale.total;
@@ -100,11 +113,16 @@ export default function FecharCaixaPage() {
         setCredit(creditTotal.toFixed(2));
         setDebit(debitTotal.toFixed(2));
         setPix(pixTotal.toFixed(2));
-      } catch (error: any) {
+      } catch (error: unknown) {
+        // Tratamento de erro tipado
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao buscar informações do caixa.";
+
         toast({
           title: "Erro ao carregar dados",
-          description:
-            error.message || "Ocorreu um erro ao buscar informações do caixa.",
+          description: errorMessage,
           variant: "destructive",
         });
         router.push("/dashboard");
@@ -126,13 +144,11 @@ export default function FecharCaixaPage() {
     return totalCalculado - totalVendas;
   };
 
-  // Função para iniciar o processo de fechamento de caixa
   const iniciarFecharCaixa = (e: React.FormEvent) => {
     e.preventDefault();
     setShowAuthModal(true);
   };
 
-  // Função para processar a autenticação do gerente e fechar o caixa
   const autenticarGerenteEFecharCaixa = async (credentials: {
     email: string;
     password: string;
@@ -140,7 +156,6 @@ export default function FecharCaixaPage() {
     setLoading(true);
 
     try {
-      // Preparar os dados para enviar ao backend
       const paymentMethods = {
         cash: Number.parseFloat(cash || "0"),
         credit: Number.parseFloat(credit || "0"),
@@ -148,9 +163,8 @@ export default function FecharCaixaPage() {
         pix: Number.parseFloat(pix || "0"),
       };
 
-      // Enviar para o backend com as credenciais do gerente
       await registerService.closeRegister(
-        totalCalculado, // finalBalance
+        totalCalculado,
         paymentMethods,
         credentials
       );
@@ -160,19 +174,25 @@ export default function FecharCaixaPage() {
         description: `Total de vendas: R$ ${totalVendas.toFixed(2)}`,
       });
 
-      // Fechar o modal
       setShowAuthModal(false);
-
       router.push("/dashboard");
-    } catch (error: any) {
-      // O erro vai ser tratado pelo modal
-      throw error;
+    } catch (error: unknown) {
+      // Tratando o erro em vez de apenas relançá-lo
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro ao fechar o caixa.";
+
+      toast({
+        title: "Erro ao fechar caixa",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Mostrar loading enquanto carrega os dados iniciais
   if (initialLoading) {
     return (
       <DashboardShell>
@@ -194,7 +214,6 @@ export default function FecharCaixaPage() {
     );
   }
 
-  // Se não tem caixa para fechar, não renderiza o conteúdo
   if (!currentRegister) return null;
 
   return (
@@ -262,7 +281,7 @@ export default function FecharCaixaPage() {
                 </TableRow>
                 <TableRow>
                   <TableCell className="font-medium">Cancelamentos</TableCell>
-                  <TableCell>R$ {totalCancelamentos.toFixed(2)}</TableCell>
+                  <TableCell>R$ {_totalCancelamentos.toFixed(2)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="font-medium">
@@ -357,7 +376,6 @@ export default function FecharCaixaPage() {
         </Card>
       </div>
 
-      {/* Modal de autenticação de gerente */}
       <ManagerAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}

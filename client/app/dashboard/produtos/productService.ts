@@ -1,6 +1,5 @@
 import { create, read, update, remove } from "../../../services/service";
 
-// Interface para o produto (correspondente ao backend)
 export interface Product {
   _id?: string;
   name: string;
@@ -14,7 +13,6 @@ export interface Product {
   supplier: string;
 }
 
-// Interface para mapeamento com o frontend
 export interface ProductUI {
   id: string;
   nome: string;
@@ -28,7 +26,6 @@ export interface ProductUI {
   imagemUrl?: string;
 }
 
-// Converter do formato da API para o formato da UI
 export const mapToUIProduct = (product: Product): ProductUI => {
   return {
     id: product._id || "",
@@ -44,7 +41,6 @@ export const mapToUIProduct = (product: Product): ProductUI => {
   };
 };
 
-// Converter do formato da UI para o formato da API
 export const mapToAPIProduct = (product: ProductUI): Product => {
   return {
     name: product.nome,
@@ -59,7 +55,6 @@ export const mapToAPIProduct = (product: ProductUI): Product => {
   };
 };
 
-// Obter o token do localStorage
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return {
@@ -68,21 +63,17 @@ const getAuthHeaders = () => {
   };
 };
 
-// Funções para interagir com a API de produtos
 export const productService = {
-  // Buscar todos os produtos
   async getProducts(): Promise<ProductUI[]> {
     const products = await read("products", getAuthHeaders());
     return products.map(mapToUIProduct);
   },
 
-  // Buscar produto por ID
   async getProductById(id: string): Promise<ProductUI> {
     const product = await read(`products/${id}`, getAuthHeaders());
     return mapToUIProduct(product);
   },
 
-  // Criar um novo produto
   async createProduct(product: ProductUI): Promise<ProductUI> {
     const apiProduct = mapToAPIProduct(product);
     const createdProduct = await create(
@@ -93,7 +84,6 @@ export const productService = {
     return mapToUIProduct(createdProduct);
   },
 
-  // Atualizar um produto existente
   async updateProduct(id: string, product: ProductUI): Promise<ProductUI> {
     const apiProduct = mapToAPIProduct(product);
     const updatedProduct = await update(
@@ -105,7 +95,6 @@ export const productService = {
     return mapToUIProduct(updatedProduct);
   },
 
-  // Excluir um produto
   async deleteProduct(id: string): Promise<void> {
     await remove("products", id, getAuthHeaders());
   },

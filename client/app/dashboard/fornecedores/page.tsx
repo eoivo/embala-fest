@@ -22,7 +22,6 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Eye, Plus, Search, Trash, ArrowUpDown } from "lucide-react";
-import Link from "next/link";
 import {
   supplierService,
   SupplierUI,
@@ -49,7 +48,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -74,12 +72,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Função para formatar CNPJ
 const formatCNPJ = (value: string) => {
-  // Remove caracteres não numéricos
   const numericValue = value.replace(/\D/g, "");
 
-  // Aplica a máscara de CNPJ: 00.000.000/0000-00
   if (numericValue.length <= 14) {
     return numericValue
       .replace(/^(\d{2})(\d)/, "$1.$2")
@@ -91,12 +86,9 @@ const formatCNPJ = (value: string) => {
   return value;
 };
 
-// Função para formatar telefone brasileiro (aceita 8 ou 9 dígitos)
 const formatPhone = (value: string) => {
-  // Remove caracteres não numéricos
   const numericValue = value.replace(/\D/g, "");
 
-  // Aplica a máscara de telefone: (00) 00000-0000 ou (00) 0000-0000
   if (numericValue.length <= 11) {
     if (numericValue.length <= 10) {
       return numericValue
@@ -112,7 +104,6 @@ const formatPhone = (value: string) => {
   return value;
 };
 
-// Schema de validação para o formulário de edição
 const formSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   nomeContato: z
@@ -132,7 +123,6 @@ const formSchema = z.object({
   ativo: z.boolean().default(true),
 });
 
-// Schema para o formulário de criação
 const createFormSchema = formSchema;
 
 export default function FornecedoresPage() {
@@ -192,7 +182,6 @@ export default function FornecedoresPage() {
     },
   });
 
-  // Carregar fornecedores da API
   useEffect(() => {
     const fetchFornecedores = async () => {
       try {
@@ -215,7 +204,6 @@ export default function FornecedoresPage() {
     fetchFornecedores();
   }, [toast]);
 
-  // Função para ordenar fornecedores
   const sortSuppliers = (suppliers: SupplierUI[]) => {
     return [...suppliers].sort((a, b) => {
       let comparison = 0;
@@ -234,7 +222,6 @@ export default function FornecedoresPage() {
     });
   };
 
-  // Filtrar e ordenar fornecedores
   const fornecedoresFiltrados = sortSuppliers(
     fornecedores.filter(
       (fornecedor) =>
@@ -245,7 +232,6 @@ export default function FornecedoresPage() {
     )
   );
 
-  // Função para alternar a direção da ordenação
   const toggleSort = (field: string) => {
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -255,7 +241,6 @@ export default function FornecedoresPage() {
     }
   };
 
-  // Função para excluir fornecedor
   const handleExcluirFornecedor = async () => {
     if (!fornecedorParaExcluir) return;
 
@@ -282,12 +267,10 @@ export default function FornecedoresPage() {
     }
   };
 
-  // Função para abrir o modal de edição
   const handleEditSupplier = (fornecedor: SupplierUI) => {
     setSelectedSupplier(fornecedor);
     setEditModalOpen(true);
 
-    // Certifica-se de que o endereço exista antes de preencher o formulário
     const enderecoCompleto = fornecedor.endereco || {
       rua: "",
       numero: "",
@@ -297,7 +280,6 @@ export default function FornecedoresPage() {
       cep: "",
     };
 
-    // Atualiza o formulário com os dados do fornecedor selecionado
     form.reset({
       nome: fornecedor.nome,
       nomeContato: fornecedor.nomeContato,
@@ -309,20 +291,17 @@ export default function FornecedoresPage() {
     });
   };
 
-  // Função para abrir o modal de visualização
   const handleViewSupplier = (fornecedor: SupplierUI) => {
     setSelectedSupplier(fornecedor);
     setViewModalOpen(true);
   };
 
-  // Função para enviar o formulário de edição
   const onSubmitEdit = async (values: z.infer<typeof formSchema>) => {
     if (!selectedSupplier) return;
 
     try {
       setLoading(true);
 
-      // Incluir o id do fornecedor no objeto de atualização
       const updatedSupplier: SupplierUI = {
         ...values,
         id: selectedSupplier.id,
@@ -360,12 +339,10 @@ export default function FornecedoresPage() {
     }
   };
 
-  // Função para enviar o formulário de criação
   const onSubmitCreate = async (values: z.infer<typeof createFormSchema>) => {
     try {
       setLoading(true);
 
-      // Criar um novo fornecedor com ID temporário (será substituído pelo server)
       const newSupplier: SupplierUI = {
         id: "temp-id",
         ...values,
@@ -393,7 +370,6 @@ export default function FornecedoresPage() {
     }
   };
 
-  // Função para buscar o endereço pelo CEP
   const fetchAddressByCep = async (
     cep: string,
     formType: "edit" | "create"
@@ -430,7 +406,6 @@ export default function FornecedoresPage() {
     }
   };
 
-  // Função para lidar com a mudança no campo de CEP
   const handleCepChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     formType: "edit" | "create"
@@ -438,17 +413,14 @@ export default function FornecedoresPage() {
     const { value } = e.target;
     const formToUpdate = formType === "edit" ? form : createForm;
 
-    // Aplicar máscara ao CEP
     const maskedCep = applyCepMask(value);
     formToUpdate.setValue("endereco.cep", maskedCep);
 
-    // Se o CEP tiver 8 dígitos numéricos, buscar o endereço
     if (value.replace(/\D/g, "").length === 8) {
       fetchAddressByCep(value, formType);
     }
   };
 
-  // Função para aplicar máscara ao CEP (00000-000)
   const applyCepMask = (value: string) => {
     const cep = value.replace(/\D/g, "");
     if (cep.length <= 5) return cep;
@@ -489,7 +461,6 @@ export default function FornecedoresPage() {
         </div>
       )}
 
-      {/* Opções de ordenação para mobile */}
       <div className="md:hidden mb-4">
         <Select
           value={`${sortBy}-${sortDirection}`}
@@ -517,7 +488,6 @@ export default function FornecedoresPage() {
         </Select>
       </div>
 
-      {/* Versão para desktop (tabela) - mostrada apenas em telas md e maiores */}
       <div className="hidden md:block">
         <Card>
           <Table>
@@ -594,7 +564,7 @@ export default function FornecedoresPage() {
                     <TableCell>{fornecedor.telefone}</TableCell>
                     <TableCell>{fornecedor.cnpj}</TableCell>
                     <TableCell>
-                      {Boolean(fornecedor.ativo) ? (
+                      {fornecedor.ativo ? (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
                           Ativo
                         </Badge>
@@ -670,7 +640,6 @@ export default function FornecedoresPage() {
         </Card>
       </div>
 
-      {/* Versão para dispositivos móveis (cards) - mostrada apenas em telas menores que md */}
       <div className="md:hidden space-y-4">
         {loading ? (
           <Card>
@@ -703,7 +672,7 @@ export default function FornecedoresPage() {
                       Contato: {fornecedor.nomeContato}
                     </p>
                   </div>
-                  {Boolean(fornecedor.ativo) ? (
+                  {fornecedor.ativo ? (
                     <Badge className="bg-green-100 text-green-800 hover:bg-green-100 ml-2 self-start">
                       Ativo
                     </Badge>
@@ -769,7 +738,6 @@ export default function FornecedoresPage() {
         )}
       </div>
 
-      {/* Modal de confirmação de exclusão */}
       <AlertDialog
         open={!!fornecedorParaExcluir}
         onOpenChange={(open) => !open && setFornecedorParaExcluir(null)}
@@ -791,7 +759,6 @@ export default function FornecedoresPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Modal de edição de fornecedor */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader className="pb-2">
@@ -1021,7 +988,6 @@ export default function FornecedoresPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de criação de fornecedor */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader className="pb-2">
@@ -1251,7 +1217,6 @@ export default function FornecedoresPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Visualização */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useRouter } from "next/navigation";
 import { create } from "@/services/service";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,6 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-// Definindo a estrutura do cliente
 interface Address {
   street: string;
   number: string;
@@ -44,7 +43,6 @@ export default function NovoClientePage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Estado inicial do formulário
   const [formData, setFormData] = useState<Consumer>({
     name: "",
     email: "",
@@ -59,9 +57,7 @@ export default function NovoClientePage() {
     },
   });
 
-  // Função para aplicar máscara ao telefone celular (xx) xxxxx-xxxx
   const applyPhoneMask = (value: string) => {
-    // Remove todos os caracteres não numéricos
     const phoneNumber = value.replace(/\D/g, "");
 
     if (phoneNumber.length <= 0) return "";
@@ -74,30 +70,25 @@ export default function NovoClientePage() {
     )}-${phoneNumber.slice(7, 11)}`;
   };
 
-  // Função para aplicar máscara ao CEP xxxxx-xxx
   const applyCepMask = (value: string) => {
-    // Remove todos os caracteres não numéricos
     const cep = value.replace(/\D/g, "");
 
     if (cep.length <= 5) return cep;
     return `${cep.slice(0, 5)}-${cep.slice(5, 8)}`;
   };
 
-  // Atualiza os campos do formulário
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { id, value } = e.target;
 
     if (id === "phone") {
-      // Aplica máscara ao telefone
       const maskedPhone = applyPhoneMask(value);
       setFormData((prev) => ({
         ...prev,
         [id]: maskedPhone,
       }));
     } else if (id === "zipCode") {
-      // Aplica máscara ao CEP
       const maskedCep = applyCepMask(value);
       setFormData((prev) => ({
         ...prev,
@@ -107,7 +98,6 @@ export default function NovoClientePage() {
         },
       }));
 
-      // Se o CEP for apagado, limpa os campos de endereço
       if (value.replace(/\D/g, "").length === 0) {
         setFormData((prev) => ({
           ...prev,
@@ -121,7 +111,6 @@ export default function NovoClientePage() {
           },
         }));
       } else if (value.replace(/\D/g, "").length === 8) {
-        // Se tiver 8 dígitos, busca o CEP imediatamente
         fetchAddressByCep(value.replace(/\D/g, ""));
       }
     } else if (id in formData.address) {
@@ -140,7 +129,6 @@ export default function NovoClientePage() {
     }
   };
 
-  // Função para buscar endereço pelo CEP
   const fetchAddressByCep = async (cep: string) => {
     if (cep.length !== 8) return;
 
@@ -167,13 +155,11 @@ export default function NovoClientePage() {
     }
   };
 
-  // Mantemos a função handleCepBlur para compatibilidade, mas ela agora apenas chama fetchAddressByCep
   const handleCepBlur = () => {
     const cep = formData.address.zipCode.replace(/\D/g, "");
     fetchAddressByCep(cep);
   };
 
-  // Envia os dados do formulário para a API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

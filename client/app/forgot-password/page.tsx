@@ -4,6 +4,7 @@ import type React from "react";
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Mail } from "lucide-react";
+import axios from "axios";
 
 export default function ForgotPasswordPage() {
   const { toast } = useToast();
@@ -28,15 +30,32 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulando uma chamada de API
-    setTimeout(() => {
+    try {
+      // Chamar a API real de recuperação de senha
+      const response = await axios.post(
+        `${
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+        }/api/password-reset/request`,
+        { email }
+      );
+
       toast({
         title: "Email enviado",
         description: "Verifique sua caixa de entrada para redefinir sua senha.",
       });
-      setLoading(false);
       setSubmitted(true);
-    }, 1500);
+    } catch (error: any) {
+      console.error("Erro ao solicitar recuperação de senha:", error);
+      toast({
+        title: "Erro",
+        description:
+          error.response?.data?.message ||
+          "Erro ao enviar email de recuperação.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,8 +69,10 @@ export default function ForgotPasswordPage() {
       </Link>
 
       <div className="flex items-center mb-8">
-        <img
+        <Image
           src="/logos/logo-full.png"
+          width={150}
+          height={64}
           alt="EmbalaFest Logo"
           className="h-16"
         />

@@ -27,10 +27,7 @@ import {
   Filter,
   Printer,
   Search,
-  Send,
   ShoppingBag,
-  X,
-  Ban,
   ArrowUpDown,
   MessageSquare,
   XCircle,
@@ -43,12 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Link from "next/link";
-import {
-  read,
-  cancelSale,
-  cancelSaleWithManager,
-  getStoreSettings,
-} from "@/services/service"; // Atualizando o import
+import { read, cancelSale, getStoreSettings } from "@/services/service";
 import {
   Dialog,
   DialogContent,
@@ -57,16 +49,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import {
@@ -81,7 +63,7 @@ interface ISale {
   user: {
     name: string;
   };
-  consumer?: string; // Agora é apenas o ID do consumer
+  consumer?: string;
   createdAt: string;
   total: number;
   paymentMethod: string;
@@ -114,7 +96,12 @@ interface IConsumer {
   updatedAt: string;
 }
 
-// Componente ManagerAuthModal específico para cancelamento de vendas
+interface CustomError {
+  message?: string;
+  status?: number;
+  [key: string]: unknown;
+}
+
 function ManagerAuthModal({
   isOpen,
   onClose,
@@ -144,11 +131,11 @@ function ManagerAuthModal({
 
     try {
       await onConfirm({ email, password });
-      // Limpa o formulário após sucesso
       setEmail("");
       setPassword("");
-    } catch (err: any) {
-      setError(err.message || "Falha na autenticação");
+    } catch (err: unknown) {
+      const customError = err as CustomError;
+      setError(customError.message || "Falha na autenticação");
     }
   };
 
@@ -245,11 +232,9 @@ export default function PedidosPage() {
     async function fetchData() {
       try {
         setIsLoading(true);
-        // Buscar pedidos
         const data = await read("sales");
         setPedidos(data || []);
 
-        // Buscar consumidores
         const consumersData: { [key: string]: IConsumer } = {};
         for (const pedido of data) {
           if (pedido.consumer && !consumersData[pedido.consumer]) {
@@ -261,7 +246,6 @@ export default function PedidosPage() {
                 `Erro ao buscar consumidor ${pedido.consumer}:`,
                 error
               );
-              // Se não conseguir buscar o consumidor, cria um objeto vazio
               consumersData[pedido.consumer] = {
                 _id: pedido.consumer,
                 name: "Cliente não encontrado",
@@ -287,7 +271,6 @@ export default function PedidosPage() {
 
         setConsumers(consumersData);
 
-        // Buscar configurações da loja
         const storeData = await getStoreSettings();
         if (storeData) {
           setStoreSettings(storeData);
@@ -302,7 +285,6 @@ export default function PedidosPage() {
     fetchData();
   }, []);
 
-  // Função para ordenar pedidos
   const sortPedidos = (pedidos: ISale[]) => {
     return [...pedidos].sort((a, b) => {
       let comparison = 0;
@@ -341,7 +323,6 @@ export default function PedidosPage() {
     )
   );
 
-  // Função para alternar a direção da ordenação
   const toggleSort = (field: string) => {
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -370,7 +351,6 @@ export default function PedidosPage() {
     }
   };
 
-  // Função para traduzir os métodos de pagamento
   const traduzirFormaPagamento = (paymentMethod: string): string => {
     switch (paymentMethod.toLowerCase()) {
       case "cash":
@@ -398,12 +378,9 @@ export default function PedidosPage() {
   const handleImprimirPedido = (pedido: ISale) => {
     setPedidoSelecionado(pedido);
     setShowPrintDialog(true);
-
-    // Implementar a lógica de impressão na função separada para ser chamada no diálogo
   };
 
   const imprimirPedido = () => {
-    // Criar uma nova janela com a impressão formatada
     const printWindow = window.open("", "_blank", "width=600,height=600");
     if (!printWindow || !pedidoSelecionado) return;
 
@@ -501,11 +478,8 @@ export default function PedidosPage() {
     printWindow.document.write(conteudo);
     printWindow.document.close();
 
-    // Aguardar o carregamento do conteúdo e imprimir
     printWindow.onload = function () {
       printWindow.print();
-      // Fecha a janela após a impressão (opcional)
-      // printWindow.close();
     };
 
     setShowPrintDialog(false);
@@ -514,7 +488,6 @@ export default function PedidosPage() {
   const handleEnviarWhatsapp = (pedido: ISale) => {
     setPedidoSelecionado(pedido);
 
-    // Se tiver telefone do consumidor, preencher
     if (
       pedido.consumer &&
       consumers[pedido.consumer] &&
@@ -531,7 +504,6 @@ export default function PedidosPage() {
   const enviarWhatsapp = () => {
     if (!pedidoSelecionado) return;
 
-    // Validar número de telefone
     const numero = whatsappNumber.replace(/\D/g, "");
     if (numero.length < 10) {
       toast({
@@ -549,10 +521,8 @@ export default function PedidosPage() {
       pedidoSelecionado.createdAt
     ).toLocaleDateString();
 
-    // Criar mensagem para WhatsApp com informações da loja
     let mensagem = `*${storeSettings.storeName || "EMBALAFEST"}*\n`;
 
-    // Adicionar informações da loja
     if (storeSettings.cnpj) mensagem += `CNPJ: ${storeSettings.cnpj}\n`;
     if (storeSettings.address) mensagem += `${storeSettings.address}\n`;
     if (storeSettings.phone) mensagem += `Telefone: ${storeSettings.phone}\n`;
@@ -580,10 +550,8 @@ export default function PedidosPage() {
       storeSettings.storeName || "EMBALAFEST"
     } - Obrigado pela preferência!`;
 
-    // Codificar a mensagem para URL
     const mensagemCodificada = encodeURIComponent(mensagem);
 
-    // Abrir WhatsApp Web com a mensagem
     window.open(`https://wa.me/${numero}?text=${mensagemCodificada}`, "_blank");
 
     setShowWhatsappDialog(false);
@@ -594,13 +562,11 @@ export default function PedidosPage() {
     });
   };
 
-  // Funções para o cancelamento de pedidos
   const handleCancelarPedido = (pedido: ISale) => {
     setPedidoSelecionado(pedido);
     setShowCancelDialog(true);
   };
 
-  // Função para confirmar o cancelamento e mostrar a autenticação de gerente
   const confirmarCancelamento = () => {
     if (!pedidoSelecionado) return;
     setIsLoading(true);
@@ -611,7 +577,6 @@ export default function PedidosPage() {
           title: "Pedido cancelado",
           description: "O pedido foi cancelado com sucesso.",
         });
-        // Atualizar a lista de pedidos
         read("sales")
           .then((data) => {
             setPedidos(data || []);
@@ -685,7 +650,6 @@ export default function PedidosPage() {
         </div>
       )}
 
-      {/* Opções de ordenação para mobile */}
       <div className="md:hidden mb-4">
         <Select
           value={`${sortBy}-${sortDirection}`}
@@ -713,7 +677,6 @@ export default function PedidosPage() {
         </Select>
       </div>
 
-      {/* Versão para desktop - visível apenas em telas md e maiores */}
       <div className="hidden md:block">
         <Card>
           <div className="rounded-md border">
@@ -924,7 +887,6 @@ export default function PedidosPage() {
         </Card>
       </div>
 
-      {/* Versão para dispositivos móveis (cards) - visível apenas em telas menores que md */}
       <div className="md:hidden space-y-4">
         {isLoading ? (
           <Card>
@@ -1044,7 +1006,6 @@ export default function PedidosPage() {
         )}
       </div>
 
-      {/* Modal de Visualização do Pedido */}
       {pedidoSelecionado && (
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="max-w-md">
@@ -1116,7 +1077,6 @@ export default function PedidosPage() {
         </Dialog>
       )}
 
-      {/* Modal de Impressão */}
       {pedidoSelecionado && (
         <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
           <DialogContent className="max-w-md">
@@ -1139,7 +1099,6 @@ export default function PedidosPage() {
         </Dialog>
       )}
 
-      {/* Modal de Envio WhatsApp */}
       {pedidoSelecionado && (
         <Dialog open={showWhatsappDialog} onOpenChange={setShowWhatsappDialog}>
           <DialogContent className="max-w-md">
@@ -1176,7 +1135,6 @@ export default function PedidosPage() {
         </Dialog>
       )}
 
-      {/* Modal de Cancelamento */}
       {pedidoSelecionado && (
         <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
           <DialogContent className="max-w-md">
@@ -1191,7 +1149,8 @@ export default function PedidosPage() {
               <div className="border rounded-md p-3 bg-red-50">
                 <p className="text-sm text-red-800">
                   Atenção: Esta ação não pode ser desfeita. O status do pedido
-                  será alterado para "Cancelado" e o estoque será restaurado.
+                  será alterado para &quot;Cancelado&quot; e o estoque será
+                  restaurado.
                 </p>
               </div>
               <div>
@@ -1228,12 +1187,14 @@ export default function PedidosPage() {
         </Dialog>
       )}
 
-      {/* Modal de Autenticação de Gerente */}
       {showManagerAuth && (
         <ManagerAuthModal
           isOpen={showManagerAuth}
           onClose={() => setShowManagerAuth(false)}
-          onConfirm={confirmarCancelamento}
+          onConfirm={async (_credentials) => {
+            await confirmarCancelamento();
+            return;
+          }}
           loading={isLoading}
         />
       )}

@@ -30,7 +30,6 @@ import {
   Plus,
   Search,
   Trash,
-  AlertTriangle,
   ArrowUpDown,
 } from "lucide-react";
 import Link from "next/link";
@@ -65,7 +64,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
 import {
   Tooltip,
   TooltipContent,
@@ -128,7 +126,6 @@ export default function ClientesPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { toast } = useToast();
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -193,7 +190,6 @@ export default function ClientesPage() {
     }
   }, [selectedClient, editModalOpen, form]);
 
-  // Função para ordenar clientes
   const sortClients = (clients: Consumer[]) => {
     return [...clients].sort((a, b) => {
       let comparison = 0;
@@ -205,7 +201,6 @@ export default function ClientesPage() {
       } else if (sortBy === "totalSales") {
         comparison = a.totalSales - b.totalSales;
       } else if (sortBy === "lastSale") {
-        // Compara datas de última compra, tratando valores nulos
         if (!a.lastSale && !b.lastSale) comparison = 0;
         else if (!a.lastSale) comparison = -1;
         else if (!b.lastSale) comparison = 1;
@@ -220,7 +215,6 @@ export default function ClientesPage() {
     });
   };
 
-  // Filtrar e ordenar clientes
   const clientesFiltrados = sortClients(
     clientes.filter(
       (cliente) =>
@@ -230,7 +224,6 @@ export default function ClientesPage() {
     )
   );
 
-  // Função para alternar a direção da ordenação
   const toggleSort = (field: string) => {
     if (sortBy === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -351,7 +344,6 @@ export default function ClientesPage() {
         </div>
       )}
 
-      {/* Opções de ordenação para mobile */}
       <div className="md:hidden mb-4">
         <Select
           value={`${sortBy}-${sortDirection}`}
@@ -383,7 +375,6 @@ export default function ClientesPage() {
         </Select>
       </div>
 
-      {/* Versão para desktop (tabela) - mostrada apenas em telas md e maiores */}
       <div className="hidden md:block">
         <Card>
           <div className="rounded-md border">
@@ -496,7 +487,7 @@ export default function ClientesPage() {
                             : "Nenhuma"}
                         </TableCell>
                         <TableCell>
-                          {Boolean(cliente.status) ? (
+                          {cliente.status ? (
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
                               Ativo
                             </Badge>
@@ -578,7 +569,6 @@ export default function ClientesPage() {
         </Card>
       </div>
 
-      {/* Versão para dispositivos móveis (cards) - mostrada apenas em telas menores que md */}
       <div className="md:hidden space-y-4">
         {loading ? (
           <Card>
@@ -604,7 +594,7 @@ export default function ClientesPage() {
                       {cliente.email}
                     </div>
                   </div>
-                  {Boolean(cliente.status) ? (
+                  {cliente.status ? (
                     <Badge className="bg-green-100 text-green-800 hover:bg-green-100 ml-2 self-start">
                       Ativo
                     </Badge>
@@ -684,7 +674,6 @@ export default function ClientesPage() {
         )}
       </div>
 
-      {/* Modal de Visualização */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -784,7 +773,6 @@ export default function ClientesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Edição */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -975,7 +963,6 @@ export default function ClientesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Confirmação de Exclusão */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

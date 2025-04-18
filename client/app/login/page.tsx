@@ -4,6 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +22,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { create } from "@/services/service";
 import { jwtDecode } from "jwt-decode";
 
+interface DecodedToken {
+  id: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -36,25 +45,20 @@ export default function LoginPage() {
     setLoading(true);
     setRetryMessage(false);
 
-    // Iniciar um temporizador para mostrar a mensagem de "Servidor inicializando..."
     const messageTimer = setTimeout(() => {
       setRetryMessage(true);
-    }, 4000); // Mostrar mensagem após 4 segundos
+    }, 4000);
 
     try {
       const response = await create("users/login", { email, password }, {});
 
-      // Se chegou aqui, login bem-sucedido - limpar o timer
       clearTimeout(messageTimer);
 
-      // Armazena o token no localStorage
       localStorage.setItem("token", response.token);
 
-      // Decodifica o token para obter o userId
-      const decodedToken: any = jwtDecode(response.token);
-      const userId = decodedToken.id; // Ajuste conforme a estrutura do seu token
+      const decodedToken: DecodedToken = jwtDecode(response.token);
+      const userId = decodedToken.id;
 
-      // Armazena o userId no localStorage
       localStorage.setItem("userId", userId);
 
       toast({
@@ -62,10 +66,8 @@ export default function LoginPage() {
         description: "Bem-vindo de volta ao sistema.",
       });
 
-      // Redireciona para o dashboard
       router.push("/dashboard");
     } catch (error) {
-      // Limpar o timer se houver erro
       clearTimeout(messageTimer);
 
       toast({
@@ -90,10 +92,13 @@ export default function LoginPage() {
       </Link>
 
       <div className="flex items-center mb-8">
-        <img
+        <Image
           src="/logos/logo-full.png"
           alt="EmbalaFest Logo"
-          className="h-16"
+          width={160}
+          height={64}
+          className="h-16 w-auto"
+          priority
         />
       </div>
 

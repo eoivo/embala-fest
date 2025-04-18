@@ -30,9 +30,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Minus, Plus, Printer, Send, Trash, X } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash, X } from "lucide-react";
 import Link from "next/link";
-import { saleService, Product, SaleItem, PaymentMethods } from "./saleService";
+import {
+  saleService,
+  Product,
+  SaleItem,
+  PaymentMethods,
+  Sale,
+} from "./saleService";
 
 interface ItemVenda {
   id: string;
@@ -42,10 +48,18 @@ interface ItemVenda {
   total: number;
 }
 
+// Definindo interface para consumidores/clientes
+interface Consumer {
+  _id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+}
+
 export default function VendaPage() {
   const { toast } = useToast();
   const [produtos, setProdutos] = useState<Product[]>([]);
-  const [clientes, setClientes] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<Consumer[]>([]);
   const [produtoSelecionado, setProdutoSelecionado] = useState("");
   const [quantidade, setQuantidade] = useState(1);
   const [itensVenda, setItensVenda] = useState<ItemVenda[]>([]);
@@ -75,8 +89,6 @@ export default function VendaPage() {
         setClientes(clientesData);
         setMetodosDisponiveis(paymentMethodsData);
 
-        // Se o método atualmente selecionado não estiver disponível,
-        // selecione o primeiro método disponível
         if (!paymentMethodsData[formaPagamento]) {
           const availableMethods = Object.entries(paymentMethodsData)
             .filter(([_, available]) => available)
@@ -94,7 +106,7 @@ export default function VendaPage() {
     };
 
     fetchData();
-  }, []);
+  }, [formaPagamento]);
 
   const adicionarItem = () => {
     if (!produtoSelecionado) {
@@ -127,11 +139,9 @@ export default function VendaPage() {
       return;
     }
 
-    // Verificar se o produto já está na lista
     const itemExistente = itensVenda.find((item) => item.id === produto._id);
 
     if (itemExistente) {
-      // Atualizar quantidade do item existente
       setItensVenda(
         itensVenda.map((item) =>
           item.id === produto._id
@@ -144,7 +154,6 @@ export default function VendaPage() {
         )
       );
     } else {
-      // Adicionar novo item
       setItensVenda([
         ...itensVenda,
         {
@@ -157,7 +166,6 @@ export default function VendaPage() {
       ]);
     }
 
-    // Resetar seleção
     setProdutoSelecionado("");
     setQuantidade(1);
 
@@ -230,24 +238,24 @@ export default function VendaPage() {
         price: item.preco,
       }));
 
-      const sale: any = {
+      // Usando o tipo correto para o objeto sale
+      const saleData: Sale = {
         products: saleItems,
         total: calcularTotal(),
         paymentMethod: formaPagamento,
       };
 
       if (clienteSelecionado) {
-        sale.consumer = clienteSelecionado;
+        saleData.consumer = clienteSelecionado;
       }
 
-      await saleService.createSale(sale);
+      await saleService.createSale(saleData);
 
       toast({
         title: "Venda finalizada com sucesso!",
         description: `Total: R$ ${calcularTotal().toFixed(2)}`,
       });
 
-      // Resetar formulário
       setItensVenda([]);
       setFormaPagamento("cash");
       setClienteSelecionado("");
@@ -352,7 +360,6 @@ export default function VendaPage() {
               </div>
 
               <div className="border rounded-md">
-                {/* Versão desktop da tabela - visível apenas em telas md e maiores */}
                 <div className="hidden md:block">
                   <Table>
                     <TableHeader>
@@ -449,7 +456,6 @@ export default function VendaPage() {
                   </Table>
                 </div>
 
-                {/* Versão mobile - Cards para telas menores */}
                 <div className="md:hidden">
                   {itensVenda.length === 0 ? (
                     <div className="text-center text-muted-foreground py-6">

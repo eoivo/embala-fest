@@ -9,7 +9,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from "recharts";
 import { Label } from "../ui/label";
 import {
@@ -19,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Button } from "../ui/button";
 import { Calendar } from "lucide-react";
 import {
   dashboardService,
@@ -44,7 +42,6 @@ export function Overview({ data }: OverviewProps) {
     useState<VendasPorPeriodo | null>(null);
   const [formattedData, setFormattedData] = useState(data);
 
-  // Lista de semanas disponíveis (últimas 4 semanas)
   const semanas = [
     { label: "Últimos 7 dias", value: "atual" },
     { label: "Semana passada", value: "passada" },
@@ -52,7 +49,6 @@ export function Overview({ data }: OverviewProps) {
     { label: "Há 3 semanas", value: "3semanas" },
   ];
 
-  // Lista de meses disponíveis (últimos 6 meses)
   const meses = [
     { label: "Abril 2025", value: "04-2025" },
     { label: "Março 2025", value: "03-2025" },
@@ -64,15 +60,13 @@ export function Overview({ data }: OverviewProps) {
 
   const [selectedPeriod, setSelectedPeriod] = useState(semanas[0].value);
 
-  // Função para calcular datas com base no período selecionado
   const calcularPeriodo = (tipo: string, periodo: string): [string, string] => {
     const hoje = new Date();
 
     if (tipo === "semana") {
       if (periodo === "atual") {
-        // Para "Últimos 7 dias" (incluindo hoje)
         const inicioSemana = new Date(hoje);
-        inicioSemana.setDate(hoje.getDate() - 6); // 6 dias atrás + hoje = 7 dias
+        inicioSemana.setDate(hoje.getDate() - 6);
         inicioSemana.setHours(0, 0, 0, 0);
 
         const fimSemana = new Date(hoje);
@@ -83,17 +77,14 @@ export function Overview({ data }: OverviewProps) {
           fimSemana.toISOString().split("T")[0],
         ];
       } else {
-        // Para as outras semanas, mantemos a lógica original
         const inicioSemana = new Date(hoje);
         const fimSemana = new Date(hoje);
 
-        // Ajustar para o início da semana atual (segunda-feira)
-        const diaSemana = inicioSemana.getDay(); // 0 = domingo, 1 = segunda, ...
+        const diaSemana = inicioSemana.getDay();
         const diferenca = diaSemana === 0 ? 6 : diaSemana - 1;
         inicioSemana.setDate(inicioSemana.getDate() - diferenca);
         inicioSemana.setHours(0, 0, 0, 0);
 
-        // Final da semana (domingo)
         fimSemana.setDate(inicioSemana.getDate() + 6);
         fimSemana.setHours(23, 59, 59, 999);
 
@@ -114,9 +105,8 @@ export function Overview({ data }: OverviewProps) {
         ];
       }
     } else if (tipo === "mes") {
-      // A lógica de mês permanece a mesma
       const [mes, ano] = periodo.split("-");
-      const mesNum = parseInt(mes, 10) - 1; // Mês em JS é 0-indexed
+      const mesNum = parseInt(mes, 10) - 1;
       const anoNum = parseInt(ano, 10);
 
       const inicioMes = new Date();
@@ -124,7 +114,7 @@ export function Overview({ data }: OverviewProps) {
       inicioMes.setHours(0, 0, 0, 0);
 
       const fimMes = new Date();
-      fimMes.setFullYear(anoNum, mesNum + 1, 0); // Último dia do mês
+      fimMes.setFullYear(anoNum, mesNum + 1, 0);
       fimMes.setHours(23, 59, 59, 999);
 
       return [
@@ -133,7 +123,6 @@ export function Overview({ data }: OverviewProps) {
       ];
     }
 
-    // Caso padrão (não deve acontecer)
     const inicioDefault = new Date(hoje);
     inicioDefault.setDate(inicioDefault.getDate() - 6);
     inicioDefault.setHours(0, 0, 0, 0);
@@ -144,7 +133,6 @@ export function Overview({ data }: OverviewProps) {
     ];
   };
 
-  // Buscar dados quando o período mudar
   useEffect(() => {
     const carregarDados = async () => {
       try {
@@ -154,18 +142,18 @@ export function Overview({ data }: OverviewProps) {
           selectedPeriod
         );
 
-        // Sempre buscar dados atualizados da API
         const resultado = await dashboardService.getVendasPorPeriodo(
           dataInicio,
           dataFim
         );
         setVendasPorPeriodo(resultado);
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: "Erro ao carregar vendas",
           description:
-            error.message ||
-            "Não foi possível carregar os dados de vendas do período",
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar os dados de vendas do período",
           variant: "destructive",
         });
       } finally {
@@ -176,22 +164,16 @@ export function Overview({ data }: OverviewProps) {
     carregarDados();
   }, [periodType, selectedPeriod, toast]);
 
-  // Formatar dados para o gráfico
   useEffect(() => {
     if (vendasPorPeriodo) {
-      // Transformar os dados para o formato esperado pelo gráfico
       const formattedData = vendasPorPeriodo.vendas.map((item) => {
-        // Verificar se é uma data no formato ISO (YYYY-MM-DD)
         if (
           typeof item.data === "string" &&
           item.data.match(/^\d{4}-\d{2}-\d{2}$/)
         ) {
           try {
-            // Correção específica para o problema de fuso horário
-            // Extrair dia, mês e ano diretamente da string YYYY-MM-DD
-            const [ano, mes, dia] = item.data.split("-").map(Number);
+            const [_ano, mes, dia] = item.data.split("-").map(Number);
 
-            // Formatar a data manualmente para evitar problemas de fuso horário
             const dataFormatada = `${dia.toString().padStart(2, "0")}/${mes
               .toString()
               .padStart(2, "0")}`;
@@ -226,7 +208,6 @@ export function Overview({ data }: OverviewProps) {
             value={periodType}
             onValueChange={(value: "semana" | "mes" | "custom") => {
               setPeriodType(value);
-              // Resetar o período selecionado para o primeiro do novo tipo
               if (value === "semana") {
                 setSelectedPeriod(semanas[0].value);
               } else if (value === "mes") {

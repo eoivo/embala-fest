@@ -3,6 +3,7 @@ import { MainNav } from "@/components/main-nav";
 import { UserNav } from "@/components/user-nav";
 import { BalloonBackground } from "@/components/festive-elements";
 import { UserProvider } from "@/hooks/use-user-context";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -17,9 +18,11 @@ export default function DashboardLayout({
             <div className="flex h-16 items-center px-4">
               <div className="flex items-center">
                 <div className="flex items-center">
-                  <img
+                  <Image
                     src="/logos/logo-icon.png"
                     alt="EmbalaFest Logo"
+                    width={32}
+                    height={32}
                     className="h-8 w-8"
                   />
                   <span className="ml-2 font-bold text-lg text-primary hidden sm:inline">

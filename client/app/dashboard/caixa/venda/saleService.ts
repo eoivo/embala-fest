@@ -116,7 +116,6 @@ export const saleService = {
       return await response.json();
     } catch (error: any) {
       console.error("Erro ao buscar métodos de pagamento:", error);
-      // Retornar todos os métodos como disponíveis em caso de erro
       return {
         cash: true,
         credit: true,

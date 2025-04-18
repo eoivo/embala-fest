@@ -38,12 +38,13 @@ export default function DashboardPage() {
         setLoading(true);
         const data = await dashboardService.getDashboardData();
         setDashboardData(data);
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: "Erro ao carregar dados",
           description:
-            error.message ||
-            "Ocorreu um erro ao buscar informações do dashboard.",
+            error instanceof Error
+              ? error.message
+              : "Ocorreu um erro ao buscar informações do dashboard.",
           variant: "destructive",
         });
       } finally {

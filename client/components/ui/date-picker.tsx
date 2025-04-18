@@ -18,36 +18,44 @@ interface DatePickerProps {
   date: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
   label?: string;
+  className?: string;
 }
 
 export function DatePicker({
   date,
   onDateChange,
   label = "Selecionar data",
+  className,
 }: DatePickerProps) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className={cn(
-            "w-[240px] justify-start text-left font-normal",
-            !date && "text-muted-foreground"
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP", { locale: ptBR }) : <span>{label}</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="end">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={onDateChange}
-          initialFocus
-          locale={ptBR}
-        />
-      </PopoverContent>
-    </Popover>
+    <div className={className}>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              "w-[240px] justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? (
+              format(date, "PPP", { locale: ptBR })
+            ) : (
+              <span>{label}</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={onDateChange}
+            initialFocus
+            locale={ptBR}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }

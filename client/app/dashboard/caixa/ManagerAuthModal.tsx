@@ -42,7 +42,7 @@ export function ManagerAuthModal({
 
     try {
       await onConfirm({ email, password });
-      // Limpa o formulário após sucesso
+  
       setEmail("");
       setPassword("");
     } catch (err: any) {

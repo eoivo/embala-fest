@@ -21,7 +21,6 @@ import {
   CalendarClock,
   CreditCard,
   DollarSign,
-  FileText,
   Plus,
   ShoppingCart,
 } from "lucide-react";
@@ -29,11 +28,60 @@ import Link from "next/link";
 import { registerService } from "./registerService";
 import { useToast } from "@/hooks/use-toast";
 
+interface PaymentMethodAmounts {
+  cash?: number;
+  credit?: number;
+  debit?: number;
+  pix?: number;
+}
+
+interface RegisterUser {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+interface CurrentRegister {
+  _id: string;
+  id?: string;
+  status: string;
+  horaAbertura: string;
+  saldoInicial: number;
+  saldoAtual: number;
+  totalVendas: number;
+  qtdeVendas: number;
+  vendasPorFormaPagamento: PaymentMethodAmounts;
+  user?: RegisterUser;
+}
+
+interface DashboardData {
+  status: "open" | "closed";
+  currentRegister: CurrentRegister | null;
+  lastClosedRegister?: {
+    horaFechamento: string;
+  };
+}
+
+interface RegisterHistoryItem {
+  _id: string;
+  status: string;
+  createdAt: string;
+  closedAt?: string;
+  initialBalance: number;
+  finalBalance?: number;
+  user?: RegisterUser;
+  closedBy?: RegisterUser;
+}
+
 export default function CaixaPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<any>(null);
-  const [registerHistory, setRegisterHistory] = useState<any[]>([]);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [registerHistory, setRegisterHistory] = useState<RegisterHistoryItem[]>(
+    []
+  );
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -44,11 +92,14 @@ export default function CaixaPage() {
 
         setDashboardData(data);
         setRegisterHistory(Array.isArray(history) ? history : []);
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao buscar informações do caixa.";
         toast({
           title: "Erro ao carregar dados",
-          description:
-            error.message || "Ocorreu um erro ao buscar informações do caixa.",
+          description: errorMessage,
           variant: "destructive",
         });
       } finally {
@@ -375,7 +426,6 @@ export default function CaixaPage() {
                     Nenhum histórico de caixa encontrado
                   </p>
                 ) : (
-                  // Ordenar por data decrescente (mais recente primeiro)
                   [...registerHistory]
                     .sort(
                       (a, b) =>

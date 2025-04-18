@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -108,7 +109,7 @@ export default function RegisterPage() {
       </Link>
 
       <div className="flex items-center mb-8">
-        <img
+        <Image
           src="/logos/logo-full.png"
           alt="EmbalaFest Logo"
           className="h-16"
