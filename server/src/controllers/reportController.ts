@@ -40,7 +40,13 @@ export const getDailyReport = asyncHandler(
           $lt: nextDay,
         },
         status: "completed",
-      }).populate("products.product");
+      }).populate({
+        path: "products.product",
+        populate: {
+          path: "category",
+          model: "Category",
+        },
+      });
 
       const totalFaturado = sales.reduce((sum, sale) => sum + sale.total, 0);
       const numeroVendas = sales.length;
@@ -83,28 +89,79 @@ export const getDailyReport = asyncHandler(
 
       sales.forEach((sale) => {
         sale.products.forEach((item: SaleProduct) => {
-          if (!(item.product instanceof mongoose.Types.ObjectId)) {
-            const produto = item.product as IProduct & {
-              _id: mongoose.Types.ObjectId;
-            };
-            const id = produto._id.toString();
+          try {
+            // Verificar se o produto existe
+            if (!item.product) {
+              console.warn("Produto não encontrado em uma venda");
+              return;
+            }
 
-            if (produtosMap.has(id)) {
-              const produtoExistente = produtosMap.get(id)!;
+            // Extrair informações do produto
+            let produtoId: string;
+            let produtoNome: string = "Produto não identificado";
+            let categoriaNome: string = "Não categorizado";
+
+            // Se o produto for um ObjectId (não populado)
+            if (
+              item.product instanceof mongoose.Types.ObjectId ||
+              typeof item.product === "string"
+            ) {
+              produtoId = item.product.toString();
+            }
+            // Se o produto for um objeto populado
+            else {
+              const produto = item.product as IProduct & {
+                _id: mongoose.Types.ObjectId;
+                category?: any;
+                name?: string;
+              };
+
+              // Verificar se o produto tem um _id válido
+              if (!produto._id) {
+                console.warn("Produto sem ID válido");
+                return;
+              }
+
+              produtoId = produto._id.toString();
+              produtoNome = produto.name || "Produto não identificado";
+
+              // Determinar o nome da categoria
+              if (produto.category) {
+                // Se category for um objeto (referência populada)
+                if (
+                  typeof produto.category === "object" &&
+                  produto.category !== null
+                ) {
+                  if (produto.category.name) {
+                    categoriaNome = produto.category.name;
+                  } else if (produto.category._id) {
+                    categoriaNome = produto.category._id.toString();
+                  }
+                }
+                // Se category for uma string (formato antigo)
+                else if (typeof produto.category === "string") {
+                  categoriaNome = produto.category;
+                }
+              }
+            }
+
+            // Adicionar ou atualizar o produto no mapa
+            if (produtosMap.has(produtoId)) {
+              const produtoExistente = produtosMap.get(produtoId)!;
               produtoExistente.quantidade += item.quantity;
               produtoExistente.valor += item.price * item.quantity;
             } else {
-              produtosMap.set(id, {
-                id,
-                nome: produto.name,
+              produtosMap.set(produtoId, {
+                id: produtoId,
+                nome: produtoNome,
                 quantidade: item.quantity,
                 valor: item.price * item.quantity,
                 percentualFaturamento: 0,
-                categoria: produto.category
-                  ? produto.category.toString()
-                  : "Não categorizado",
+                categoria: categoriaNome,
               });
             }
+          } catch (error) {
+            console.error("Erro ao processar produto:", error);
           }
         });
       });
@@ -365,7 +422,13 @@ export const getProductsReport = asyncHandler(
           $lt: fim,
         },
         status: "completed",
-      }).populate("products.product");
+      }).populate({
+        path: "products.product",
+        populate: {
+          path: "category",
+          model: "Category",
+        },
+      });
 
       const totalVendas = sales.reduce((sum, sale) => sum + sale.total, 0);
 
@@ -373,28 +436,79 @@ export const getProductsReport = asyncHandler(
 
       sales.forEach((sale) => {
         sale.products.forEach((item: SaleProduct) => {
-          if (!(item.product instanceof mongoose.Types.ObjectId)) {
-            const produto = item.product as IProduct & {
-              _id: mongoose.Types.ObjectId;
-            };
-            const id = produto._id.toString();
+          try {
+            // Verificar se o produto existe
+            if (!item.product) {
+              console.warn("Produto não encontrado em uma venda");
+              return;
+            }
 
-            if (produtosMap.has(id)) {
-              const produtoExistente = produtosMap.get(id)!;
+            // Extrair informações do produto
+            let produtoId: string;
+            let produtoNome: string = "Produto não identificado";
+            let categoriaNome: string = "Não categorizado";
+
+            // Se o produto for um ObjectId (não populado)
+            if (
+              item.product instanceof mongoose.Types.ObjectId ||
+              typeof item.product === "string"
+            ) {
+              produtoId = item.product.toString();
+            }
+            // Se o produto for um objeto populado
+            else {
+              const produto = item.product as IProduct & {
+                _id: mongoose.Types.ObjectId;
+                category?: any;
+                name?: string;
+              };
+
+              // Verificar se o produto tem um _id válido
+              if (!produto._id) {
+                console.warn("Produto sem ID válido");
+                return;
+              }
+
+              produtoId = produto._id.toString();
+              produtoNome = produto.name || "Produto não identificado";
+
+              // Determinar o nome da categoria
+              if (produto.category) {
+                // Se category for um objeto (referência populada)
+                if (
+                  typeof produto.category === "object" &&
+                  produto.category !== null
+                ) {
+                  if (produto.category.name) {
+                    categoriaNome = produto.category.name;
+                  } else if (produto.category._id) {
+                    categoriaNome = produto.category._id.toString();
+                  }
+                }
+                // Se category for uma string (formato antigo)
+                else if (typeof produto.category === "string") {
+                  categoriaNome = produto.category;
+                }
+              }
+            }
+
+            // Adicionar ou atualizar o produto no mapa
+            if (produtosMap.has(produtoId)) {
+              const produtoExistente = produtosMap.get(produtoId)!;
               produtoExistente.quantidade += item.quantity;
               produtoExistente.valor += item.price * item.quantity;
             } else {
-              produtosMap.set(id, {
-                id,
-                nome: produto.name,
-                categoria: produto.category
-                  ? produto.category.toString()
-                  : "Não categorizado",
+              produtosMap.set(produtoId, {
+                id: produtoId,
+                nome: produtoNome,
+                categoria: categoriaNome,
                 quantidade: item.quantity,
                 valor: item.price * item.quantity,
                 percentualFaturamento: 0,
               });
             }
+          } catch (error) {
+            console.error("Erro ao processar produto:", error);
           }
         });
       });
