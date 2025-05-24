@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -239,6 +239,35 @@ function CategoriasContent() {
               </TableBody>
             </Table>
           </Card>
+        </div>
+
+        <div className="md:hidden">
+          {categoriasFiltradas.map((cat) => (
+            <Card key={cat.id} className="mb-4">
+              <CardHeader>
+                <CardTitle>{cat.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{cat.description}</p>
+              </CardContent>
+              <CardFooter className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleAbrirModal(cat)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCategoriaParaExcluir(cat.id)}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
 
         {/* Modal de criar/editar */}
