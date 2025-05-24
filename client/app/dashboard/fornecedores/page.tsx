@@ -71,6 +71,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSearchParams } from "next/navigation";
 
 const formatCNPJ = (value: string) => {
   const numericValue = value.replace(/\D/g, "");
@@ -141,6 +142,7 @@ export default function FornecedoresPage() {
   const [sortBy, setSortBy] = useState<string>("nome");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -203,6 +205,12 @@ export default function FornecedoresPage() {
 
     fetchFornecedores();
   }, [toast]);
+
+  useEffect(() => {
+    if (searchParams.get("novo") === "1") {
+      setCreateModalOpen(true);
+    }
+  }, [searchParams]);
 
   const sortSuppliers = (suppliers: SupplierUI[]) => {
     return [...suppliers].sort((a, b) => {

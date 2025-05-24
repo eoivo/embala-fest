@@ -37,8 +37,8 @@ const silentRead = async (resource: string) => {
 };
 
 export const registerService = {
-  openRegister: async (initialBalance: number) => {
-    return await create("register/open", { initialBalance });
+  openRegister: async (initialBalance: number, managerCredentials?: { email: string; password: string }) => {
+    return await create("register/open", { initialBalance, managerCredentials });
   },
 
   getCurrentRegister: async () => {
@@ -83,5 +83,9 @@ export const registerService = {
 
   getDashboard: async () => {
     return await read("register/dashboard");
+  },
+
+  getCurrentUser: async () => {
+    return await read("users/me");
   },
 };

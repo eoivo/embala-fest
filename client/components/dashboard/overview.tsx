@@ -49,14 +49,37 @@ export function Overview({ data }: OverviewProps) {
     { label: "Há 3 semanas", value: "3semanas" },
   ];
 
-  const meses = [
-    { label: "Abril 2025", value: "04-2025" },
-    { label: "Março 2025", value: "03-2025" },
-    { label: "Fevereiro 2025", value: "02-2025" },
-    { label: "Janeiro 2025", value: "01-2025" },
-    { label: "Dezembro 2024", value: "12-2024" },
-    { label: "Novembro 2024", value: "11-2024" },
-  ];
+  // Gera dinamicamente os meses disponíveis a partir do mês atual
+  function gerarMeses() {
+    const mesesNomes = [
+      "Janeiro",
+      "Fevereiro",
+      "Março",
+      "Abril",
+      "Maio",
+      "Junho",
+      "Julho",
+      "Agosto",
+      "Setembro",
+      "Outubro",
+      "Novembro",
+      "Dezembro",
+    ];
+    const hoje = new Date();
+    const mesesArray = [];
+    for (let i = 0; i < 6; i++) {
+      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const mes = data.getMonth();
+      const ano = data.getFullYear();
+      mesesArray.push({
+        label: `${mesesNomes[mes]} ${ano}`,
+        value: `${(mes + 1).toString().padStart(2, "0")}-${ano}`,
+      });
+    }
+    return mesesArray;
+  }
+
+  const [meses, setMeses] = useState(gerarMeses());
 
   const [selectedPeriod, setSelectedPeriod] = useState(semanas[0].value);
 
@@ -193,6 +216,11 @@ export function Overview({ data }: OverviewProps) {
       setFormattedData(formattedData);
     }
   }, [vendasPorPeriodo]);
+
+  // Atualiza os meses quando muda o mês atual
+  useEffect(() => {
+    setMeses(gerarMeses());
+  }, []);
 
   const formatadorReais = new Intl.NumberFormat("pt-BR", {
     style: "currency",

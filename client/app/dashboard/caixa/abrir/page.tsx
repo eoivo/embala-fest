@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { registerService } from "@/app/dashboard/caixa/registerService";
+import { ManagerAuthModal } from "../ManagerAuthModal";
 
 export default function AbrirCaixaPage() {
   const router = useRouter();
@@ -28,14 +29,16 @@ export default function AbrirCaixaPage() {
   const [loading, setLoading] = useState(false);
   const operador = "Operador de Caixa";
   const [hasOpenRegister, setHasOpenRegister] = useState(false);
+  const [userRole, setUserRole] = useState<string>("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const checkCurrentRegister = async () => {
       try {
         setLoading(true);
-
         const dashboard = await registerService.getDashboard();
-
+        const user = await registerService.getCurrentUser();
+        setUserRole(user.role);
         if (
           dashboard &&
           dashboard.status === "open" &&
@@ -55,37 +58,39 @@ export default function AbrirCaixaPage() {
         setLoading(false);
       }
     };
-
     checkCurrentRegister();
   }, [router, toast]);
 
   const handleAbrirCaixa = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    if (userRole === "admin" || userRole === "manager") {
+      await abrirCaixaDireto();
+    } else {
+      setShowAuthModal(true);
+    }
+  };
 
+  const abrirCaixaDireto = async (managerCredentials?: {
+    email: string;
+    password: string;
+  }) => {
+    setLoading(true);
     try {
       const initialBalance = parseFloat(saldoInicial);
-
       if (isNaN(initialBalance)) {
         throw new Error("Valor inválido para saldo inicial");
       }
-
-      // Removendo a variável response que não é utilizada
-      await registerService.openRegister(initialBalance);
-
+      await registerService.openRegister(initialBalance, managerCredentials);
       toast({
         title: "Caixa aberto com sucesso!",
         description: `Saldo inicial: R$ ${saldoInicial}`,
       });
-
       router.push("/dashboard/caixa/venda");
     } catch (error: unknown) {
-      // Tratamos o erro como um objeto com possível propriedade message
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Ocorreu um erro ao tentar abrir o caixa.";
-
       toast({
         title: "Erro ao abrir caixa",
         description: errorMessage,
@@ -93,6 +98,7 @@ export default function AbrirCaixaPage() {
       });
     } finally {
       setLoading(false);
+      setShowAuthModal(false);
     }
   };
 
@@ -154,6 +160,13 @@ export default function AbrirCaixaPage() {
           </form>
         </Card>
       </div>
+      <ManagerAuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onConfirm={abrirCaixaDireto}
+        loading={loading}
+        actionLabel="abrir"
+      />
     </DashboardShell>
   );
 }

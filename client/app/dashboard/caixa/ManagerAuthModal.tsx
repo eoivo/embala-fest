@@ -19,6 +19,7 @@ interface ManagerAuthModalProps {
     password: string;
   }) => Promise<void>;
   loading: boolean;
+  actionLabel?: string;
 }
 
 export function ManagerAuthModal({
@@ -26,6 +27,7 @@ export function ManagerAuthModal({
   onClose,
   onConfirm,
   loading,
+  actionLabel = "fechar",
 }: ManagerAuthModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,7 +58,7 @@ export function ManagerAuthModal({
         <DialogHeader>
           <DialogTitle>Autenticação de Gerente</DialogTitle>
           <DialogDescription>
-            Para fechar o caixa, é necessária a autenticação de um gerente.
+            Para {actionLabel} o caixa, é necessária a autenticação de um gerente.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

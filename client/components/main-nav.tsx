@@ -48,6 +48,12 @@ export function MainNav() {
       active: pathname.includes("/dashboard/produtos"),
     },
     {
+      href: "/dashboard/categorias",
+      label: "Categorias",
+      icon: ClipboardList,
+      active: pathname.includes("/dashboard/categorias"),
+    },
+    {
       href: "/dashboard/fornecedores",
       label: "Fornecedores",
       icon: Building,

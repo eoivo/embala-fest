@@ -22,6 +22,13 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { registerService } from "@/app/dashboard/caixa/registerService";
 import { ManagerAuthModal } from "@/app/dashboard/caixa/ManagerAuthModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 // Definindo interfaces para fortes tipagens
 interface Sale {
@@ -55,16 +62,20 @@ export default function FecharCaixaPage() {
   const [currentRegister, setCurrentRegister] = useState<Register | null>(null);
   const [saldoInicial, setSaldoInicial] = useState(0);
   const [totalVendas, setTotalVendas] = useState(0);
-  // Adicionando prefixo _ para indicar que variáveis não usadas são intencionais
   const [_totalCancelamentos, _setTotalCancelamentos] = useState(0);
   const [qtdeVendas, setQtdeVendas] = useState(0);
   const [horaAbertura, setHoraAbertura] = useState("");
+  const [userRole, setUserRole] = useState<string>("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     const fetchCurrentRegister = async () => {
       try {
         setInitialLoading(true);
-        const register = await registerService.getCurrentRegister();
+        const [register, user] = await Promise.all([
+          registerService.getCurrentRegister(),
+          registerService.getCurrentUser(),
+        ]);
 
         if (!register || register.status === "closed") {
           toast({
@@ -78,6 +89,7 @@ export default function FecharCaixaPage() {
 
         setCurrentRegister(register);
         setSaldoInicial(register.initialBalance);
+        setUserRole(user.role);
 
         let total = 0;
         let count = 0;
@@ -144,9 +156,44 @@ export default function FecharCaixaPage() {
     return totalCalculado - totalVendas;
   };
 
-  const iniciarFecharCaixa = (e: React.FormEvent) => {
+  const iniciarFecharCaixa = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowAuthModal(true);
+    if (userRole === "admin" || userRole === "manager") {
+      setShowConfirmModal(true);
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
+  const fecharCaixaComoAdmin = async () => {
+    setLoading(true);
+    try {
+      const paymentMethods = {
+        cash: Number.parseFloat(cash || "0"),
+        credit: Number.parseFloat(credit || "0"),
+        debit: Number.parseFloat(debit || "0"),
+        pix: Number.parseFloat(pix || "0"),
+      };
+      await registerService.closeRegister(totalCalculado, paymentMethods);
+      toast({
+        title: "Caixa fechado com sucesso!",
+        description: `Total de vendas: R$ ${totalVendas.toFixed(2)}`,
+      });
+      router.push("/dashboard");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro ao fechar o caixa.";
+      toast({
+        title: "Erro ao fechar caixa",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setShowConfirmModal(false);
+    }
   };
 
   const autenticarGerenteEFecharCaixa = async (credentials: {
@@ -382,6 +429,30 @@ export default function FecharCaixaPage() {
         onConfirm={autenticarGerenteEFecharCaixa}
         loading={loading}
       />
+      {/* Modal de confirmação para admin */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Fechamento</DialogTitle>
+          </DialogHeader>
+          <p>
+            Tem certeza que deseja fechar o caixa? Esta ação não poderá ser
+            desfeita.
+          </p>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmModal(false)}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={fecharCaixaComoAdmin} disabled={loading}>
+              {loading ? "Processando..." : "Confirmar Fechamento"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }

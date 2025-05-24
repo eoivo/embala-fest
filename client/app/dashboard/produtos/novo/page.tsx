@@ -36,6 +36,10 @@ import {
   supplierService,
   SupplierUI,
 } from "@/app/dashboard/produtos/supplierService";
+import {
+  categoryService,
+  CategoryUI,
+} from "@/app/dashboard/categorias/categoryService";
 
 export default function NovoProdutoPage() {
   const router = useRouter();
@@ -43,6 +47,8 @@ export default function NovoProdutoPage() {
   const [loading, setLoading] = useState(false);
   const [loadingFornecedores, setLoadingFornecedores] = useState(true);
   const [fornecedores, setFornecedores] = useState<SupplierUI[]>([]);
+  const [categorias, setCategorias] = useState<CategoryUI[]>([]);
+  const [loadingCategorias, setLoadingCategorias] = useState(true);
   const [formData, setFormData] = useState<Partial<ProductUI>>({
     nome: "",
     descricao: "",
@@ -76,6 +82,27 @@ export default function NovoProdutoPage() {
     fetchFornecedores();
   }, [toast]);
 
+  // Buscar categorias do servidor
+  useEffect(() => {
+    async function fetchCategorias() {
+      try {
+        setLoadingCategorias(true);
+        const data = await categoryService.getCategories();
+        setCategorias(data);
+      } catch (error) {
+        console.error("Erro ao carregar categorias:", error);
+        toast({
+          title: "Erro ao carregar categorias",
+          description: "Não foi possível obter a lista de categorias",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingCategorias(false);
+      }
+    }
+    fetchCategorias();
+  }, [toast]);
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -90,6 +117,14 @@ export default function NovoProdutoPage() {
   };
 
   const handleSelectChange = (value: string, field: string) => {
+    if (field === "fornecedor" && value === "criar_novo") {
+      router.push("/dashboard/fornecedores?novo=1");
+      return;
+    }
+    if (field === "categoria" && value === "criar_nova_categoria") {
+      router.push("/dashboard/categorias?novo=1");
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -201,16 +236,37 @@ export default function NovoProdutoPage() {
                       handleSelectChange(value, "categoria")
                     }
                     value={formData.categoria}
+                    disabled={loadingCategorias}
                   >
                     <SelectTrigger id="categoria">
-                      <SelectValue placeholder="Selecione uma categoria" />
+                      <SelectValue
+                        placeholder={
+                          loadingCategorias
+                            ? "Carregando categorias..."
+                            : "Selecione uma categoria"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="embalagens">Embalagens</SelectItem>
-                      <SelectItem value="descartaveis">Descartáveis</SelectItem>
-                      <SelectItem value="decoracao">Decoração</SelectItem>
-                      <SelectItem value="festas">Festas</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
+                      {categorias.length === 0 ? (
+                        <SelectItem value="placeholder" disabled>
+                          {loadingCategorias
+                            ? "Carregando..."
+                            : "Nenhuma categoria encontrada"}
+                        </SelectItem>
+                      ) : (
+                        categorias.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))
+                      )}
+                      <SelectItem
+                        value="criar_nova_categoria"
+                        className="text-blue-600 font-semibold"
+                      >
+                        + Criar nova categoria?
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -246,6 +302,12 @@ export default function NovoProdutoPage() {
                           </SelectItem>
                         ))
                       )}
+                      <SelectItem
+                        value="criar_novo"
+                        className="text-blue-600 font-semibold"
+                      >
+                        + Criar novo fornecedor?
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

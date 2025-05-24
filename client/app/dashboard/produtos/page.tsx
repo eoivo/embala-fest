@@ -74,6 +74,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  categoryService,
+  CategoryUI,
+} from "@/app/dashboard/categorias/categoryService";
 
 // Schema de validação para o formulário de edição
 const formSchema = z.object({
@@ -102,6 +106,8 @@ export default function ProdutosPage() {
   const [sortBy, setSortBy] = useState<string>("nome");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const { toast } = useToast();
+  const [categorias, setCategorias] = useState<CategoryUI[]>([]);
+  const [loadingCategorias, setLoadingCategorias] = useState(true);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -160,6 +166,27 @@ export default function ProdutosPage() {
     fetchFornecedores();
   }, [toast]);
 
+  // Buscar categorias do servidor
+  useEffect(() => {
+    async function fetchCategorias() {
+      try {
+        setLoadingCategorias(true);
+        const data = await categoryService.getCategories();
+        setCategorias(data);
+      } catch (error) {
+        console.error("Erro ao carregar categorias:", error);
+        toast({
+          title: "Erro ao carregar categorias",
+          description: "Não foi possível obter a lista de categorias",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingCategorias(false);
+      }
+    }
+    fetchCategorias();
+  }, [toast]);
+
   // Função para ordenar produtos
   const sortProducts = (products: ProductUI[]) => {
     return [...products].sort((a, b) => {
@@ -204,6 +231,12 @@ export default function ProdutosPage() {
   const getFornecedorNome = (id: string) => {
     const fornecedor = fornecedores.find((f) => f.id === id);
     return fornecedor ? fornecedor.nome : id;
+  };
+
+  // Função utilitária para obter o nome da categoria pelo id
+  const getCategoriaNome = (id: string) => {
+    const categoria = categorias.find((c) => c.id === id);
+    return categoria ? categoria.name : id;
   };
 
   // Função para excluir produto
@@ -429,7 +462,9 @@ export default function ProdutosPage() {
                       <TableCell>{produto.codigo}</TableCell>
                       <TableCell>{produto.nome}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{produto.categoria}</Badge>
+                        <Badge variant="outline">
+                          {getCategoriaNome(produto.categoria)}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         R$ {produto.preco.toFixed(2)}
@@ -539,7 +574,7 @@ export default function ProdutosPage() {
                     </p>
                   </div>
                   <Badge variant="outline" className="ml-2 self-start">
-                    {produto.categoria}
+                    {getCategoriaNome(produto.categoria)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -735,7 +770,36 @@ export default function ProdutosPage() {
                     <FormItem>
                       <FormLabel>Categoria</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          disabled={loadingCategorias}
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={
+                                loadingCategorias
+                                  ? "Carregando categorias..."
+                                  : "Selecione uma categoria"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categorias.length === 0 ? (
+                              <SelectItem value="placeholder" disabled>
+                                {loadingCategorias
+                                  ? "Carregando..."
+                                  : "Nenhuma categoria encontrada"}
+                              </SelectItem>
+                            ) : (
+                              categorias.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -749,7 +813,13 @@ export default function ProdutosPage() {
                     <FormItem>
                       <FormLabel>Preço</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -765,7 +835,13 @@ export default function ProdutosPage() {
                     <FormItem>
                       <FormLabel>Estoque</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

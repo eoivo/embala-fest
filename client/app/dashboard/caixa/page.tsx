@@ -71,6 +71,7 @@ interface RegisterHistoryItem {
   finalBalance?: number;
   user?: RegisterUser;
   closedBy?: RegisterUser;
+  closingNotes?: string;
 }
 
 export default function CaixaPage() {
@@ -513,10 +514,35 @@ export default function CaixaPage() {
                                   : (register.finalBalance || 0).toFixed(2)}
                               </div>
                             </div>
-                            {!isOpen && register.closedBy && (
+                            {!isOpen && (
                               <div className="col-span-3 mt-2 text-xs text-muted-foreground">
-                                Fechado por:{" "}
-                                {register.closedBy.name || "Desconhecido"}
+                                {register.closingNotes &&
+                                register.closingNotes
+                                  .toLowerCase()
+                                  .includes("automático") ? (
+                                  <>
+                                    Fechado por:{" "}
+                                    <span className="font-semibold">
+                                      Caixa fechado automaticamente
+                                    </span>
+                                  </>
+                                ) : register.closedBy?.name ? (
+                                  <>
+                                    Fechado por:{" "}
+                                    <span className="font-semibold">
+                                      {register.closedBy.name}
+                                    </span>
+                                  </>
+                                ) : register.user?.name ? (
+                                  <>
+                                    Fechado por:{" "}
+                                    <span className="font-semibold">
+                                      {register.user.name}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>Fechado por: Desconhecido</>
+                                )}
                               </div>
                             )}
                           </div>
