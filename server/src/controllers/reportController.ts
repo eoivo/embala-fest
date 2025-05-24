@@ -100,6 +100,9 @@ export const getDailyReport = asyncHandler(
                 quantidade: item.quantity,
                 valor: item.price * item.quantity,
                 percentualFaturamento: 0,
+                categoria: produto.category
+                  ? produto.category.toString()
+                  : "Não categorizado",
               });
             }
           }
@@ -384,7 +387,9 @@ export const getProductsReport = asyncHandler(
               produtosMap.set(id, {
                 id,
                 nome: produto.name,
-                categoria: produto.category || "Não categorizado",
+                categoria: produto.category
+                  ? produto.category.toString()
+                  : "Não categorizado",
                 quantidade: item.quantity,
                 valor: item.price * item.quantity,
                 percentualFaturamento: 0,
@@ -920,7 +925,9 @@ export const exportProductsReportToExcel = asyncHandler(
             produtosPorId[productId] = {
               id: productId,
               nome: product.name,
-              categoria: product.category,
+              categoria: product.category
+                ? product.category.toString()
+                : "Não categorizado",
               quantidade: 0,
               valor: 0,
               percentualFaturamento: 0,
@@ -1056,7 +1063,9 @@ export const exportProductsReportToPDF = asyncHandler(
             produtosPorId[productId] = {
               id: productId,
               nome: product.name,
-              categoria: product.category,
+              categoria: product.category
+                ? product.category.toString()
+                : "Não categorizado",
               quantidade: 0,
               valor: 0,
               percentualFaturamento: 0,

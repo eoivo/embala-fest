@@ -81,7 +81,11 @@ export const dashboardController = {
         {
           $group: {
             _id: {
-              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$createdAt",
+                timezone: "-03:00",
+              },
             },
             total: { $sum: "$total" },
           },
@@ -182,7 +186,11 @@ export const dashboardController = {
         {
           $group: {
             _id: {
-              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+              $dateToString: {
+                format: "%Y-%m-%d",
+                date: "$createdAt",
+                timezone: "-03:00",
+              },
             },
             total: { $sum: "$total" },
           },

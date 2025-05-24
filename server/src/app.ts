@@ -18,6 +18,7 @@ import settingsRoutes from "./routes/settingsRoutes.js";
 import storeSettingsRoutes from "./routes/storeSettingsRoutes.js";
 import supplierRoutes from "./routes/supplierRoutes.js";
 import passwordResetRoutes from "./routes/passwordResetRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 
 config();
 
@@ -140,6 +141,7 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/store-settings", storeSettingsRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/password-reset", passwordResetRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.use(errorHandler);
 

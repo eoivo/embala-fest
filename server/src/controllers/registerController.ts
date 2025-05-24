@@ -34,7 +34,61 @@ interface IRegisterPopulated extends mongoose.Document {
 
 export const openRegister = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const { initialBalance } = req.body;
+    const { initialBalance, managerCredentials } = req.body;
+
+    // Se o usuário autenticado for admin ou manager, permite abrir sem autenticação extra
+    if (
+      req.user &&
+      (req.user.role === "admin" || req.user.role === "manager")
+    ) {
+      const existingOpenRegister = await Register.findOne({
+        user: req.user._id,
+        status: "open",
+      });
+
+      if (existingOpenRegister) {
+        res.status(400);
+        throw new Error("You already have an open register");
+      }
+
+      const register = await Register.create({
+        user: req.user._id,
+        initialBalance,
+        status: "open",
+      });
+
+      res.status(201).json(register);
+      return;
+    }
+
+    // Para cashier, exige autenticação de gerente
+    if (
+      !managerCredentials ||
+      !managerCredentials.email ||
+      !managerCredentials.password
+    ) {
+      res.status(400);
+      throw new Error("Credenciais do gerente são obrigatórias");
+    }
+
+    const manager = await User.findOne({ email: managerCredentials.email });
+
+    if (!manager) {
+      res.status(401);
+      throw new Error("Email ou senha inválidos");
+    }
+
+    if (manager.role !== "manager" && manager.role !== "admin") {
+      res.status(403);
+      throw new Error("Apenas gerentes podem autorizar a abertura do caixa");
+    }
+
+    const isMatch = await manager.matchPassword(managerCredentials.password);
+
+    if (!isMatch) {
+      res.status(401);
+      throw new Error("Email ou senha inválidos");
+    }
 
     const existingOpenRegister = await Register.findOne({
       user: req.user._id,
@@ -60,6 +114,32 @@ export const closeRegister = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { finalBalance, paymentMethods, managerCredentials } = req.body;
 
+    // Se o usuário autenticado for admin ou manager, permite fechar sem autenticação extra
+    if (
+      req.user &&
+      (req.user.role === "admin" || req.user.role === "manager")
+    ) {
+      const register = await Register.findOne({
+        user: req.user._id,
+        status: "open",
+      });
+
+      if (!register) {
+        res.status(404);
+        throw new Error("Nenhum caixa aberto encontrado");
+      }
+
+      register.finalBalance = finalBalance;
+      register.status = "closed";
+      register.closedAt = new Date();
+      register.closedBy = req.user._id;
+
+      const closedRegister = await register.save();
+      res.json(closedRegister);
+      return;
+    }
+
+    // Para outros papéis (ex: cashier), exige autenticação de gerente
     if (
       !managerCredentials ||
       !managerCredentials.email ||
@@ -110,8 +190,15 @@ export const closeRegister = asyncHandler(
 
 export const getRegisterHistory = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const registers = await Register.find({ user: req.user._id })
+    let query = {};
+    if (req.user && req.user.role !== "admin" && req.user.role !== "manager") {
+      // cashier só vê o próprio histórico
+      query = { user: req.user._id };
+    }
+    // admin/manager vê todos
+    const registers = await Register.find(query)
       .populate("user", "name")
+      .populate("closedBy", "name")
       .populate("sales");
     res.json(registers);
   }
