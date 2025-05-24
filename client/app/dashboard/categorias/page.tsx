@@ -45,6 +45,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -54,6 +55,14 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CategoriasPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <CategoriasContent />
+    </Suspense>
+  );
+}
+
+function CategoriasContent() {
   const [categorias, setCategorias] = useState<CategoryUI[]>([]);
   const [busca, setBusca] = useState("");
   const [loading, setLoading] = useState(true);
@@ -157,150 +166,152 @@ export default function CategoriasPage() {
 
   return (
     <DashboardShell>
-      <DashboardHeader
-        heading="Categorias"
-        description="Gerencie as categorias de produtos"
-      >
-        <Button onClick={() => handleAbrirModal()}>
-          <Plus className="mr-2 h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Nova Categoria</span>
-          <span className="sm:hidden">Nova</span>
-        </Button>
-      </DashboardHeader>
+      <Suspense fallback={<div>Carregando...</div>}>
+        <DashboardHeader
+          heading="Categorias"
+          description="Gerencie as categorias de produtos"
+        >
+          <Button onClick={() => handleAbrirModal()}>
+            <Plus className="mr-2 h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nova Categoria</span>
+            <span className="sm:hidden">Nova</span>
+          </Button>
+        </DashboardHeader>
 
-      <div className="flex items-center mb-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar categorias..."
-            className="pl-8"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
+        <div className="flex items-center mb-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar categorias..."
+              className="pl-8"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="hidden md:block">
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categoriasFiltradas.length === 0 ? (
+        <div className="hidden md:block">
+          <Card>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-4">
-                    {loading
-                      ? "Carregando categorias..."
-                      : busca
-                      ? "Nenhuma categoria encontrada para a busca"
-                      : "Nenhuma categoria cadastrada"}
-                  </TableCell>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ) : (
-                categoriasFiltradas.map((cat) => (
-                  <TableRow key={cat.id}>
-                    <TableCell className="font-medium">{cat.name}</TableCell>
-                    <TableCell>{cat.description}</TableCell>
-                    <TableCell className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleAbrirModal(cat)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setCategoriaParaExcluir(cat.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {categoriasFiltradas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-4">
+                      {loading
+                        ? "Carregando categorias..."
+                        : busca
+                        ? "Nenhuma categoria encontrada para a busca"
+                        : "Nenhuma categoria cadastrada"}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Card>
-      </div>
-
-      {/* Modal de criar/editar */}
-      <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editando ? "Editar Categoria" : "Nova Categoria"}
-            </DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSalvar)}
-              className="space-y-4"
-            >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input {...field} autoFocus disabled={loading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                ) : (
+                  categoriasFiltradas.map((cat) => (
+                    <TableRow key={cat.id}>
+                      <TableCell className="font-medium">{cat.name}</TableCell>
+                      <TableCell>{cat.description}</TableCell>
+                      <TableCell className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleAbrirModal(cat)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setCategoriaParaExcluir(cat.id)}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={loading} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit" disabled={loading}>
-                  {editando ? "Salvar" : "Criar"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              </TableBody>
+            </Table>
+          </Card>
+        </div>
 
-      {/* Modal de confirmação de exclusão */}
-      <AlertDialog
-        open={!!categoriaParaExcluir}
-        onOpenChange={() => setCategoriaParaExcluir(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
-          </AlertDialogHeader>
-          <p>
-            Tem certeza que deseja excluir esta categoria? Esta ação não poderá
-            ser desfeita.
-          </p>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExcluir} disabled={loading}>
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Modal de criar/editar */}
+        <Dialog open={modalAberto} onOpenChange={setModalAberto}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editando ? "Editar Categoria" : "Nova Categoria"}
+              </DialogTitle>
+            </DialogHeader>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(handleSalvar)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl>
+                        <Input {...field} autoFocus disabled={loading} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Descrição</FormLabel>
+                      <FormControl>
+                        <Input {...field} disabled={loading} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" disabled={loading}>
+                    {editando ? "Salvar" : "Criar"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de confirmação de exclusão */}
+        <AlertDialog
+          open={!!categoriaParaExcluir}
+          onOpenChange={() => setCategoriaParaExcluir(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir categoria?</AlertDialogTitle>
+            </AlertDialogHeader>
+            <p>
+              Tem certeza que deseja excluir esta categoria? Esta ação não
+              poderá ser desfeita.
+            </p>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleExcluir} disabled={loading}>
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </Suspense>
     </DashboardShell>
   );
 }
