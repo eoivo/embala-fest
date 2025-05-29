@@ -323,37 +323,6 @@ export default function VendaPage() {
                     )}
                   </div>
                 </div>
-                <div className="w-full md:w-32">
-                  <Label htmlFor="quantidade">Quantidade</Label>
-                  <div className="flex items-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantidade(Math.max(1, quantidade - 1))}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      id="quantidade"
-                      type="number"
-                      min="1"
-                      value={quantidade}
-                      onChange={(e) =>
-                        setQuantidade(Number.parseInt(e.target.value) || 1)
-                      }
-                      className="mx-2 text-center"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantidade(quantidade + 1)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
                 <div className="w-full md:w-auto self-end">
                   <Button onClick={adicionarItem}>Adicionar</Button>
                 </div>

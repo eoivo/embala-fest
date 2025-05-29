@@ -688,7 +688,7 @@ export default function ProdutosPage() {
 
               <div>
                 <h3 className="font-semibold text-sm">Categoria</h3>
-                <p>{selectedProduct.categoria}</p>
+                <p>{getCategoriaNome(selectedProduct.categoria)}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -704,7 +704,7 @@ export default function ProdutosPage() {
 
               <div>
                 <h3 className="font-semibold text-sm">Fornecedor</h3>
-                <p>{selectedProduct.fornecedor}</p>
+                <p>{getFornecedorNome(selectedProduct.fornecedor)}</p>
               </div>
             </div>
           )}
